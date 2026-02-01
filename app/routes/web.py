@@ -228,14 +228,35 @@ def ui_profile(request: Request, profile_id: int, offer_id: int = None, db: Sess
         "ui_profile.html",
         {
             "request": request,
-            "title": f"Ofrezco · {profile_data['user_name']}",
-            "page_title": "Perfil",
-            "back_url": "javascript:history.back()",
+            "title": f"Perfil de {profile_data['user_name']}",
+            "user": get_user_context(request, db),
             "p": profile_data,
             "service_offers": service_offers,
             "sales_offers": sales_offers,
-            "user": get_user_context(request, db),
             "is_me": request.session.get("profile_id") == profile_id
+        }
+    )
+
+@router.get("/ui/offers/{offer_id}", response_class=HTMLResponse)
+def ui_offer_detail(request: Request, offer_id: int, db: Session = Depends(get_db)):
+    offer = db.execute(select(Offer).where(Offer.id == offer_id)).scalar_one_or_none()
+    if not offer:
+        return RedirectResponse("/ui")
+    
+    # Datos del dueño
+    prof = offer.profile
+    user_owner = prof.user if prof else None
+
+    return templates.TemplateResponse(
+        "ui_offer_detail.html",
+        {
+            "request": request,
+            "title": offer.title,
+            "user": get_user_context(request, db),
+            "o": offer,
+            "p": prof,
+            "owner": user_owner,
+            "is_mine": request.session.get("profile_id") == prof.id if prof else False
         }
     )
 

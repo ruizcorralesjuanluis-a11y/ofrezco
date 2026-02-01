@@ -134,15 +134,17 @@
     </button>
     {% endif %}
 
-    {% if o.video_path %}
-    <video class="offer-video" controls playsinline>
-      <source src="{{ o.video_path }}">
-    </video>
-    {% else %}
-    <div class="offer-video d-flex align-items-center justify-content-center text-white small">
-      (Sin vídeo)
-    </div>
-    {% endif %}
+    <a href="/ui/offers/{{ o.id }}" class="text-decoration-none">
+      {% if o.video_path %}
+      <video class="offer-video" controls playsinline>
+        <source src="{{ o.video_path }}">
+      </video>
+      {% else %}
+      <div class="offer-video d-flex align-items-center justify-content-center text-white small">
+        (Sin vídeo)
+      </div>
+      {% endif %}
+    </a>
 
     <div class="offer-body">
       {% if o.price %}
@@ -184,7 +186,7 @@
         </button>
         {% endif %}
 
-        <div class="mosaic-video-wrapper">
+        <a href="/ui/offers/{{ o.id }}" class="mosaic-video-wrapper d-block text-decoration-none">
           {% if o.video_path %}
           <video class="mosaic-video-thumb" muted loop onmouseover="this.play()" onmouseout="this.pause()" playsinline>
             <source src="{{ o.video_path }}">
@@ -201,7 +203,7 @@
             {{ o.price }} €
           </div>
           {% endif %}
-        </div>
+        </a>
 
         <div class="p-2">
           <div class="fw-bold text-truncate" style="font-size:13px; line-height:1.2;">{{ o.title }}</div>

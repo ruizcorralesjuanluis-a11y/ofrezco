@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .offer-detail-hero {
+        position: relative;
+        width: 100%;
+        background: #000;
+        margin-top: -1.5rem;
+        /* Ajuste para subir el video al borde */
+        overflow: hidden;
+    }
+
+    .video-full {
+        width: 100%;
+        max-height: 80vh;
+        display: block;
+        object-fit: contain;
+    }
+
+    .detail-body {
+        background: #fff;
+        border-radius: 30px 30px 0 0;
+        margin-top: -20px;
+        position: relative;
+        z-index: 2;
+        padding: 24px 20px;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .detail-category {
+        text-transform: uppercase;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+
+    .detail-title {
+        font-size: 24px;
+        font-weight: 900;
+        letter-spacing: -0.5px;
+        line-height: 1.2;
+        margin-bottom: 12px;
+    }
+
+    .detail-price {
+        font-size: 28px;
+        font-weight: 900;
+        color: #16a34a;
+        margin-bottom: 20px;
+    }
+
+    .detail-section {
+        margin-top: 24px;
+        border-top: 1px solid #f1f5f9;
+        padding-top: 20px;
+    }
+
+    .profile-card-mini {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 16px;
+        text-decoration: none;
+        color: inherit;
+        border: 1px solid #f1f5f9;
+    }
+
+    .btn-wa {
+        background: #25D366;
+        color: #fff;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-weight: 800;
+        padding: 16px;
+        border-radius: 99px;
+        width: 100%;
+        text-decoration: none;
+        margin-top: 20px;
+        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+    }
+
+    .btn-wa:hover {
+        background: #128c7e;
+        color: #fff;
+    }
+
+    .back-btn-float {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(5px);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: #000;
+        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+</style>
+
+<div class="offer-detail-hero">
+    <a href="javascript:history.back()" class="back-btn-float">←</a>
+
+    {% if o.video_path %}
+    <video class="video-full" controls autoplay muted playsinline loop>
+        <source src="{{ o.video_path }}">
+    </video>
+    {% else %}
+    <div class="d-flex align-items-center justify-content-center bg-secondary text-white" style="height:300px;">
+        (Sin vídeo)
+    </div>
+    {% endif %}
+</div>
+
+<div class="detail-body">
+    <div class="detail-category">{{ o.category }}</div>
+    <h1 class="detail-title">{{ o.title }}</h1>
+
+    {% if o.price %}
+    <div class="detail-price">{{ o.price }}€</div>
+    {% endif %}
+
+    <div class="detail-desc text-secondary" style="line-height: 1.6; white-space: pre-wrap;">{{ o.description or "Sin
+        descripción detallada." }}</div>
+
+    <div class="detail-section">
+        <div class="small fw-bold text-muted text-uppercase mb-2">Vendedor</div>
+        <a href="/ui/profile/{{ p.id }}" class="profile-card-mini">
+            <img src="{{ p.photo or owner.picture or 'https://via.placeholder.com/50' }}" class="rounded-circle"
+                style="width:48px;height:48px;object-fit:cover;">
+            <div>
+                <div class="fw-bold">{{ p.user_name or owner.name }}</div>
+                <div class="small text-muted">{{ p.profile_type }}</div>
+            </div>
+            <div class="ms-auto">→</div>
+        </a>
+    </div>
+
+    {% if p.phone %}
+    <a href="https://wa.me/{{ p.phone.replace('+', '').replace(' ', '') }}?text=Hola,%20me%20interesa%20tu%20anuncio:%20{{ o.title }}"
+        target="_blank" class="btn-wa">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-whatsapp"
+            viewBox="0 0 16 16">
+            <path
+                d="M13.601 2.326A7.854 7.854 0 0 0 8 0C3.58 0 0 3.58 0 8c0 1.379.31 2.673.81 3.829l-1.077 3.57 3.733-.996A7.85 7.85 0 0 0 8 16c4.42 0 8-3.58 8-8s-3.58-8-8-8zM8 14.5a6.47 6.47 0 0 1-3.26-.88l-.234-.14-2.27.606.608-2.203-.153-.235A6.477 6.477 0 0 1 2.25 8c0-3.584 2.916-6.5 6.5-6.5s6.5 2.916 6.5 6.5-2.916 6.5-6.5 6.5z" />
+        </svg>
+        Contactar por WhatsApp
+    </a>
+    {% else %}
+    <button class="btn btn-secondary w-100 pill py-3 mt-4" disabled>El vendedor no tiene WhatsApp</button>
+    {% endif %}
+
+    {% if is_mine %}
+    <button class="btn btn-outline-danger w-100 pill py-2 mt-3" onclick="deleteOffer({{ o.id }})">Borrar
+        anuncio</button>
+    {% endif %}
+</div>
+
+<script>
+    async function deleteOffer(id) {
+        if (!confirm("¿Borrar este anuncio permanentemente?")) return;
+        const res = await fetch(`/api/v1/offers/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            location.href = "/ui/offers";
+        } else {
+            alert("Error al borrar");
+        }
+    }
+</script>
+
+{% endblock %}
