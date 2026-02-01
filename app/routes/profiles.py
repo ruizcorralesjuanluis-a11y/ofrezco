@@ -11,28 +11,42 @@ router = APIRouter()
 
 @router.post("/profiles", response_model=ProfileOut)
 def create_profile(payload: ProfileCreate, request: Request, db: Session = Depends(get_db)):
+    print(f"DEBUG: Intentando crear perfil para user_id={payload.user_id}, tipo={payload.profile_type}")
+    
     # Verificar que el usuario existe (evitar IntegrityError por FK)
     from app.models.user import User
-    user = db.get(User, payload.user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="El usuario no existe. Por favor, cierra sesión e inicia de nuevo.")
+    try:
+        user = db.get(User, payload.user_id)
+        if not user:
+            print(f"ERROR: Usuario {payload.user_id} NO encontrado en la base de datos.")
+            raise HTTPException(status_code=404, detail=f"El usuario {payload.user_id} no existe. Por favor, cierra sesión e inicia de nuevo.")
 
-    profile = Profile(
-        user_id=payload.user_id,
-        profile_type=payload.profile_type,
-        description=payload.description,
-        video_url=payload.video_url,
-        available_now=payload.available_now,
-    )
-    db.add(profile)
-    db.commit()
-    db.refresh(profile)
+        profile = Profile(
+            user_id=payload.user_id,
+            profile_type=payload.profile_type,
+            description=payload.description or "",
+            video_url=payload.video_url,
+            available_now=payload.available_now,
+        )
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+        print(f"DEBUG: Perfil creado con éxito. ID={profile.id}")
 
-    # Actualizar la sesión del usuario si existe
-    if "user_id" in request.session and request.session["user_id"] == profile.user_id:
-        request.session["profile_id"] = profile.id
-    
-    return profile
+        # Actualizar la sesión del usuario si existe
+        if "user_id" in request.session and request.session["user_id"] == profile.user_id:
+            request.session["profile_id"] = profile.id
+        
+        return profile
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"ERROR CRÍTICO creando perfil: {str(e)}\n{error_trace}")
+        raise HTTPException(status_code=500, detail=f"Error interno al crear perfil: {str(e)}")
 
 
 @router.get("/profiles", response_model=list[ProfileOut])

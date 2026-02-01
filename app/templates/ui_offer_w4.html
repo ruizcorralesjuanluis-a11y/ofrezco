@@ -206,7 +206,7 @@
     // label perfil activo (base.html ya lo rellena, pero por si acaso)
     const pid = localStorage.getItem("me_profile_id");
     const el = document.getElementById("activeProfileLabel");
-    if (pid) el.textContent = "#" + pid;
+    if (pid && el) el.textContent = "#" + pid;
 
     const d = loadDraft();
     const vLabel = document.getElementById("videoInfoLabel");

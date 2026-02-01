@@ -139,7 +139,7 @@
   (function init() {
     // Definimos el tipo de flujo actual (si existe)
     const offerType = '{{ offer_type }}';
-    const salesCategories = {{ sales_categories | tojson
+    const salesCategories = {{ sales_categories | tojson | safe
   }};
 
   // Cargar borrador
@@ -203,14 +203,16 @@
     const val = this.value;
     const isInmob = val.includes("Inmobiliaria");
     const blockRE = document.getElementById("blockRealEstate");
+    const rowSpec = document.getElementById("rowSpecialty");
 
     // Si estamos en modo "sales" estricto, ocultamos siempre
     if (offerType === 'sales') {
       rowSpec.style.setProperty("display", "none", "important");
       document.getElementById("wSpecialty").value = "";
     } else {
-      if (isVenta) {
-        rowSpec.style.display = "none";
+      const isCatVenta = salesCategories.includes(val);
+      if (isCatVenta) {
+        rowSpec.style.setProperty("display", "none", "important");
         document.getElementById("wSpecialty").value = "";
       } else {
         rowSpec.style.display = "flex";
@@ -221,7 +223,6 @@
       blockRE.style.display = "block";
     } else {
       blockRE.style.display = "none";
-      // Opcional: limpiar valores si no es inmo? Mejor no por si se equivoca
     }
   });
 

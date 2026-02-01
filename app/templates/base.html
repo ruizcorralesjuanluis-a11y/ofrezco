@@ -245,31 +245,43 @@
     }
 
     async function createProfile() {
-      const uid = "{{ user.id if user else '' }}";
-      if (!uid) { alert("Debes iniciar sesión primero"); return; }
+      const uidRaw = "{{ user.id if user else '' }}";
+      if (!uidRaw) { alert("Debes iniciar sesión primero"); return; }
+      const uid = Number(uidRaw);
 
       const profile_type = document.getElementById("profileType").value;
+      const resInfo = document.getElementById("profileResult");
 
-      const res = await fetch(`${API}/profiles`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: uid, profile_type })
-      });
+      try {
+        const res = await fetch(`${API}/profiles`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: uid, profile_type })
+        });
 
-      const text = await res.text();
-      if (!res.ok) {
-        const resInfo = document.getElementById("profileResult");
+        const data = await res.json();
+        if (!res.ok) {
+          const errMsg = data.detail || "Error desconocido";
+          if (resInfo) {
+            resInfo.style.display = "block";
+            resInfo.textContent = "Error: " + (typeof errMsg === 'object' ? JSON.stringify(errMsg) : errMsg);
+          } else {
+            alert("Error: " + errMsg);
+          }
+          return;
+        }
+
+        // Éxito, recargar
+        location.reload();
+      } catch (err) {
+        console.error("Fetch error:", err);
         if (resInfo) {
           resInfo.style.display = "block";
-          resInfo.textContent = "Error: " + text;
+          resInfo.textContent = "Error de conexión: " + err.message;
         } else {
-          alert("Error: " + text);
+          alert("Error de conexión");
         }
-        return;
       }
-
-      // Éxito, recargar para que el backend detecte el nuevo perfil
-      location.reload();
     }
 
     // Service worker (PWA)
