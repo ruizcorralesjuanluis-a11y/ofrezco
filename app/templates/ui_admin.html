@@ -11,29 +11,36 @@
 
   <h5 class="fw-bold mb-2">Todas las ofertas</h5>
   <div id="allBox"></div>
+
+  <hr class="my-5">
+  <div class="card bg-danger-subtle border-danger-subtle p-3">
+    <h6 class="fw-bold text-danger">Zona de Emergencia</h6>
+    <p class="small mb-3">Si el Mercadillo falla o no puedes publicar, usa esto para arreglar la base de datos.</p>
+    <a href="/ui/admin/reset-db" class="btn btn-danger btn-sm pill">Reiniciar Base de Datos (Arreglar Esquema)</a>
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-function statusBadge(s){
-  const m = {
-    PENDING: "warning",
-    PUBLISHED: "success",
-    REJECTED: "danger",
-    DRAFT: "secondary"
-  };
-  return `<span class="badge text-bg-${m[s] || 'light'}">${s}</span>`;
-}
+  function statusBadge(s) {
+    const m = {
+      PENDING: "warning",
+      PUBLISHED: "success",
+      REJECTED: "danger",
+      DRAFT: "secondary"
+    };
+    return `<span class="badge text-bg-${m[s] || 'light'}">${s}</span>`;
+  }
 
-function availBadge(v){
-  return v
-    ? `<span class="badge text-bg-success">Disponible</span>`
-    : `<span class="badge text-bg-secondary">No disponible</span>`;
-}
+  function availBadge(v) {
+    return v
+      ? `<span class="badge text-bg-success">Disponible</span>`
+      : `<span class="badge text-bg-secondary">No disponible</span>`;
+  }
 
-function offerCard(o, admin=false){
-  return `
+  function offerCard(o, admin = false) {
+    return `
     <div class="card-soft p-3 mb-3">
       <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
         <div>
@@ -64,56 +71,56 @@ function offerCard(o, admin=false){
       </div>` : ""}
     </div>
   `;
-}
-
-async function toggleAvailability(id){
-  const res = await fetch(`/api/v1/offers/${id}/availability`, {
-    method: "PATCH"
-  });
-
-  if (!res.ok){
-    alert("No se pudo cambiar la disponibilidad");
-    return;
   }
-  loadAdmin();
-}
 
-async function setStatus(id, status){
-  const res = await fetch(`/api/v1/offers/${id}/status`, {
-    method: "PATCH",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ status })
-  });
+  async function toggleAvailability(id) {
+    const res = await fetch(`/api/v1/offers/${id}/availability`, {
+      method: "PATCH"
+    });
 
-  if (!res.ok){
-    alert("No se pudo cambiar el estado");
-    return;
+    if (!res.ok) {
+      alert("No se pudo cambiar la disponibilidad");
+      return;
+    }
+    loadAdmin();
   }
+
+  async function setStatus(id, status) {
+    const res = await fetch(`/api/v1/offers/${id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status })
+    });
+
+    if (!res.ok) {
+      alert("No se pudo cambiar el estado");
+      return;
+    }
+    loadAdmin();
+  }
+
+  async function loadAdmin() {
+    const pRes = await fetch("/api/v1/offers/pending");
+    const pending = pRes.ok ? await pRes.json() : [];
+    document.getElementById("pendingBox").innerHTML =
+      pending.length
+        ? pending.map(o => offerCard(o, true)).join("")
+        : `<div class="muted">No hay pendientes</div>`;
+
+    const pubRes = await fetch("/api/v1/offers");
+    const published = pubRes.ok ? await pubRes.json() : [];
+
+    const all = [...pending, ...published];
+    const map = new Map();
+    all.forEach(o => map.set(o.id, o));
+
+    document.getElementById("allBox").innerHTML =
+      Array.from(map.values())
+        .sort((a, b) => b.id - a.id)
+        .map(o => offerCard(o, true))
+        .join("");
+  }
+
   loadAdmin();
-}
-
-async function loadAdmin(){
-  const pRes = await fetch("/api/v1/offers/pending");
-  const pending = pRes.ok ? await pRes.json() : [];
-  document.getElementById("pendingBox").innerHTML =
-    pending.length
-      ? pending.map(o => offerCard(o, true)).join("")
-      : `<div class="muted">No hay pendientes</div>`;
-
-  const pubRes = await fetch("/api/v1/offers");
-  const published = pubRes.ok ? await pubRes.json() : [];
-
-  const all = [...pending, ...published];
-  const map = new Map();
-  all.forEach(o => map.set(o.id, o));
-
-  document.getElementById("allBox").innerHTML =
-    Array.from(map.values())
-      .sort((a,b) => b.id - a.id)
-      .map(o => offerCard(o, true))
-      .join("");
-}
-
-loadAdmin();
 </script>
 {% endblock %}

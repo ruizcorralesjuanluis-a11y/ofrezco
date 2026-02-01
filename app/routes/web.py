@@ -117,7 +117,11 @@ def ui_results(request: Request, db: Session = Depends(get_db), cat: str = None,
     elif mode == "service":
         query = query.where(~Offer.category.in_(sales_cats))
 
-    offers = db.execute(query).scalars().all()
+    try:
+        offers = db.execute(query).scalars().all()
+    except Exception as e:
+        print(f"ERROR query offers: {str(e)}")
+        offers = []
 
     # Formatear para la vista "ui_results.html" (espera objetos 'p')
     results = []
@@ -162,7 +166,7 @@ def ui_results(request: Request, db: Session = Depends(get_db), cat: str = None,
         "ui_results.html",
         {
             "request": request,
-            "title": "Resultados" if not cat else cat,
+            "title": "Resultados V4" if not cat else f"{cat} V4",
             "user": get_user_context(request, db),
             "categories": CATEGORIES,
             "page_title": "Resultados",
