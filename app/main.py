@@ -18,7 +18,7 @@ from app.routes.ratings import router as ratings_router
 from app.routes.interests import router as interests_router
 
 app = FastAPI(title="Ofrezco", version="0.1.0")
-VERSION = "V4-INIT-FIX-2026-02-01"
+VERSION = "V5-FULL-RECOVERY-2026-02-01"
 
 @app.get("/ping")
 def ping():
@@ -49,11 +49,11 @@ def on_startup():
     print(f"GOOGLE_CLIENT_SECRET presente: {bool(settings.GOOGLE_CLIENT_SECRET)}")
     print(f"SECRET_KEY presente: {bool(settings.SECRET_KEY)}")
     print("---------------------------------------------")
-    # try:
-    #     init_db()
-    #     print("DEBUG: Base de datos inicializada correctamente.")
-    # except Exception as e:
-    #     print(f"ERROR CRÍTICO inicializando DB: {str(e)}")
+    try:
+        init_db()
+        print("DEBUG: Base de datos inicializada correctamente.")
+    except Exception as e:
+        print(f"ERROR CRÍTICO inicializando DB: {str(e)}")
 
 # Redirigir la raíz directamente a la UI visual
 @app.get("/")
@@ -68,11 +68,11 @@ def health():
         "google_id": bool(settings.GOOGLE_CLIENT_ID)
     }
 
-# app.include_router(users_router, prefix="/api/v1", tags=["users"])
-# app.include_router(profiles_router, prefix="/api/v1", tags=["profiles"])
-# app.include_router(offers_router, prefix="/api/v1", tags=["offers"])
-# app.include_router(auth_router, tags=["auth"])
-# app.include_router(ratings_router, prefix="/api/v1", tags=["ratings"])
-# app.include_router(interests_router, prefix="/api/v1", tags=["interests"])
+app.include_router(users_router, prefix="/api/v1", tags=["users"])
+app.include_router(profiles_router, prefix="/api/v1", tags=["profiles"])
+app.include_router(offers_router, prefix="/api/v1", tags=["offers"])
+app.include_router(auth_router, tags=["auth"])
+app.include_router(ratings_router, prefix="/api/v1", tags=["ratings"])
+app.include_router(interests_router, prefix="/api/v1", tags=["interests"])
 
-# app.include_router(web_router)
+app.include_router(web_router)
