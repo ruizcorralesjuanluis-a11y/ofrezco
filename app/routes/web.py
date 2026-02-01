@@ -101,7 +101,7 @@ def ui_need_new(request: Request, db: Session = Depends(get_db), mode: str = "")
 # RESULTADOS (búsqueda)
 # -------------------------
 @router.get("/ui/results", response_class=HTMLResponse)
-def ui_results(request: Request, db: Session = Depends(get_db), cat: str = None, q: str = None, mode: str = "service", exclude_cat: str = None):
+def ui_results(request: Request, db: Session = Depends(get_db), cat: str = None, q: str = None, mode: str = "service", exclude_cat: str = None, exclude_cat2: str = None):
     from app.core.data import get_flattened_categories
     # Base query: Ofertas publicadas
     query = select(Offer).where(Offer.status == "PUBLISHED").order_by(Offer.id.desc())
@@ -130,6 +130,8 @@ def ui_results(request: Request, db: Session = Depends(get_db), cat: str = None,
 
     if exclude_cat:
         query = query.where(Offer.category != exclude_cat)
+    if exclude_cat2:
+        query = query.where(Offer.category != exclude_cat2)
 
     # Filtro por modo (Venta vs Servicio)
     sales_cats = get_sales_categories()

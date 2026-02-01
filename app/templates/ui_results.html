@@ -83,6 +83,15 @@
       </div>
     </form>
   </div>
+
+  {% if cat and (cat.includes('Inmobiliaria') or cat.includes('Vehículos')) %}
+  <div class="px-3 mb-3 d-grid">
+    <a href="/ui/offers/new?type=sales&fixed_cat={{ cat }}"
+      class="btn btn-dark pill fw-bold d-flex align-items-center justify-content-center gap-2 py-2">
+      ➕ Publicar en {{ cat.split('(')[0].trim() }}
+    </a>
+  </div>
+  {% endif %}
   {% if view_mode == 'mosaic' %}
   <!-- MOSAICO PARA PRODUCTOS -->
   <div class="row g-2">
@@ -133,6 +142,17 @@
                 style="font-size:10px;">❄️</span>{% endif %}
               {% if p.extra_info.parking %}<span class="badge bg-light text-dark border small"
                 style="font-size:10px;">🚗</span>{% endif %}
+
+              {% if p.extra_info.car_brand %}<span class="badge bg-light text-dark border small"
+                style="font-size:10px;">🚗 {{ p.extra_info.car_brand }} {{ p.extra_info.car_model }}</span>{% endif %}
+              {% if p.extra_info.car_year %}<span class="badge bg-light text-dark border small"
+                style="font-size:10px;">📅 {{ p.extra_info.car_year }}</span>{% endif %}
+              {% if p.extra_info.car_km %}<span class="badge bg-light text-dark border small"
+                style="font-size:10px;">🛣️ {{ p.extra_info.car_km }} km</span>{% endif %}
+              {% if p.extra_info.car_fuel %}<span class="badge bg-light text-dark border small"
+                style="font-size:10px;">⛽ {{ p.extra_info.car_fuel }}</span>{% endif %}
+              {% if p.extra_info.car_trans %}<span class="badge bg-light text-dark border small"
+                style="font-size:10px;">⚙️ Auto</span>{% endif %}
             </div>
             {% endif %}
             {% if p.rating_count > 0 %}
@@ -214,6 +234,17 @@
                 style="font-size:10px;">❄️ AC</span>{% endif %}
               {% if p.extra_info.parking %}<span class="badge bg-info bg-opacity-10 text-info small"
                 style="font-size:10px;">🚗 Garaje</span>{% endif %}
+
+              {% if p.extra_info.car_brand %}<span class="badge bg-primary bg-opacity-10 text-primary small"
+                style="font-size:10px;">🚗 {{ p.extra_info.car_brand }} {{ p.extra_info.car_model }}</span>{% endif %}
+              {% if p.extra_info.car_year %}<span class="badge bg-primary bg-opacity-10 text-primary small"
+                style="font-size:10px;">📅 {{ p.extra_info.car_year }}</span>{% endif %}
+              {% if p.extra_info.car_km %}<span class="badge bg-primary bg-opacity-10 text-primary small"
+                style="font-size:10px;">🛣️ {{ p.extra_info.car_km }} km</span>{% endif %}
+              {% if p.extra_info.car_fuel %}<span class="badge bg-primary bg-opacity-10 text-primary small"
+                style="font-size:10px;">⛽ {{ p.extra_info.car_fuel }}</span>{% endif %}
+              {% if p.extra_info.car_trans %}<span class="badge bg-primary bg-opacity-10 text-primary small"
+                style="font-size:10px;">⚙️ Automático</span>{% endif %}
             </div>
             {% endif %}
           </div>

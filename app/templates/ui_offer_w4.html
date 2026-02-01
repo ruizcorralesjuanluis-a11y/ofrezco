@@ -87,6 +87,14 @@
     if (d.terrace) lines.push(`<b>Terraza:</b> Sí`);
     if (d.ac) lines.push(`<b>Aire Acond.:</b> Sí`);
     if (d.parking) lines.push(`<b>Garaje:</b> Sí`);
+
+    if (d.carBrand) lines.push(`<b>Marca:</b> ${d.carBrand}`);
+    if (d.carModel) lines.push(`<b>Modelo:</b> ${d.carModel}`);
+    if (d.carYear) lines.push(`<b>Año:</b> ${d.carYear}`);
+    if (d.carKm) lines.push(`<b>KM:</b> ${d.carKm}`);
+    if (d.carFuel) lines.push(`<b>Combustible:</b> ${d.carFuel}`);
+    if (d.carTrans) lines.push(`<b>Cambio:</b> Automático`);
+
     s.innerHTML = lines.join("<br>");
   }
   async function publish() {
@@ -121,7 +129,7 @@
       currency: "EUR",
       available_now: !!d.available_now,
       allergens: d.specialty ? String(d.specialty) : null,
-      extra_info: (d.rooms || d.sqm || d.bathrooms || d.floor || d.lift || d.terrace || d.ac || d.parking) ? {
+      extra_info: (d.rooms || d.sqm || d.bathrooms || d.floor || d.lift || d.terrace || d.ac || d.parking || d.carBrand || d.carModel || d.carYear || d.carKm || d.carFuel || d.carTrans) ? {
         rooms: d.rooms || null,
         sqm: d.sqm || null,
         bathrooms: d.bathrooms || null,
@@ -129,7 +137,13 @@
         lift: !!d.lift,
         terrace: !!d.terrace,
         ac: !!d.ac,
-        parking: !!d.parking
+        parking: !!d.parking,
+        car_brand: d.carBrand || null,
+        car_model: d.carModel || null,
+        car_year: d.carYear || null,
+        car_km: d.carKm || null,
+        car_fuel: d.carFuel || null,
+        car_trans: !!d.carTrans
       } : null
     };
 
