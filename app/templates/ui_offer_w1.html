@@ -190,13 +190,17 @@
   // Lógica de filtrado de categorías por URL
   const urlParams = new URLSearchParams(window.location.search);
   const exclude = urlParams.get("exclude_cat");
+  const exclude2 = urlParams.get("exclude_cat2");
   const fixed = urlParams.get("fixed_cat");
   const catSelect = document.getElementById("wCategory");
 
-  if (exclude || fixed) {
+  if (exclude || exclude2 || fixed) {
     Array.from(catSelect.options).forEach(opt => {
       if (!opt.value) return;
       if (exclude && opt.value === exclude) {
+        opt.remove();
+      }
+      if (exclude2 && opt.value === exclude2) {
         opt.remove();
       }
       if (fixed && opt.value !== fixed) {
