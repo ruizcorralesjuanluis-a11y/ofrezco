@@ -142,6 +142,29 @@
     const salesCategories = {{ sales_categories | tojson | safe
   }};
 
+  // Lógica de filtrado de categorías por URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const exclude = urlParams.get("exclude_cat");
+  const fixed = urlParams.get("fixed_cat");
+  const catSelect = document.getElementById("wCategory");
+
+  if (exclude || fixed) {
+    Array.from(catSelect.options).forEach(opt => {
+      if (!opt.value) return;
+      if (exclude && opt.value === exclude) {
+        opt.remove();
+      }
+      if (fixed && opt.value !== fixed) {
+        opt.remove();
+      }
+    });
+    // Si solo queda una opción real, seleccionarla automáticamente
+    const validOptions = Array.from(catSelect.options).filter(o => o.value);
+    if (validOptions.length === 1) {
+      catSelect.value = validOptions[0].value;
+    }
+  }
+
   // Cargar borrador
   let d = loadDraft();
 

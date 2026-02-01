@@ -19,7 +19,7 @@
     <p class="muted small mb-3">1. Primero, haz una <b>foto de portada</b> para el anuncio.</p>
     <label class="btn btn-outline-secondary pill d-inline-flex align-items-center gap-2 mb-3">
       📸 Hacer / Subir Foto
-      <input id="wPhoto" type="file" accept="image/*" capture="environment" style="display:none"
+      <input id="wPhoto" type="file" accept="image/*" style="display:none"
         onchange="document.getElementById('photoLabel').textContent = this.files[0]?.name || 'Foto seleccionada';" />
     </label>
     <div id="photoLabel" class="small mb-4 text-secondary fw-bold"></div>
@@ -29,7 +29,7 @@
     <p class="muted small mb-3">2. Ahora, graba un <b id="videoInfoLabel">vídeo corto (max 15s)</b> presentándote.</p>
     <label class="btn btn-outline-primary pill d-inline-flex align-items-center gap-2">
       📹 Grabar / Subir Vídeo
-      <input id="wVideo" type="file" accept="video/*" capture="environment" style="display:none"
+      <input id="wVideo" type="file" accept="video/*" style="display:none"
         onchange="document.getElementById('videoLabel').textContent = this.files[0]?.name || 'Vídeo seleccionado';" />
     </label>
     <div id="videoLabel" class="small mt-2 text-primary fw-bold"></div>
