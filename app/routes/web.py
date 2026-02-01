@@ -198,7 +198,7 @@ def ui_results(request: Request, db: Session = Depends(get_db), cat: str = None,
 
             "results": results, 
             "flat_categories": get_flattened_categories(), # Para filtros
-            "q": q, "cat": cat, "mode": mode, "exclude_cat": exclude_cat, # Mantener filtros seleccionados
+            "q": q, "cat": cat, "mode": mode, "exclude_cat": exclude_cat, "exclude_cat2": exclude_cat2, # Mantener filtros seleccionados
             "view_mode": view_mode,
         },
     )

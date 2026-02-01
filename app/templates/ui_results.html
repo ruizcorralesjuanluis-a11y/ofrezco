@@ -84,7 +84,7 @@
     </form>
   </div>
 
-  {% if cat and (cat.includes('Inmobiliaria') or cat.includes('Vehículos')) %}
+  {% if cat and ('Inmobiliaria' in cat or 'Vehículos' in cat) %}
   <div class="px-3 mb-3 d-grid">
     <a href="/ui/offers/new?type=sales&fixed_cat={{ cat }}"
       class="btn btn-dark pill fw-bold d-flex align-items-center justify-content-center gap-2 py-2">
