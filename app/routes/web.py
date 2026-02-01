@@ -20,11 +20,29 @@ def get_user_context(request: Request, db: Session = None):
     user_id = request.session.get("user_id")
     profile_id = request.session.get("profile_id")
     
-    # Si tenemos una sesión de DB y un profile_id, verificamos que EXISTA
-    if db and profile_id:
+    # Si hay sesión pero no hay DB (raro), devolvemos lo que hay
+    if not db:
+        return {
+            "id": user_id,
+            "name": request.session.get("user_name"),
+            "email": request.session.get("user_email"),
+            "picture": request.session.get("user_picture"),
+            "profile_id": profile_id,
+        }
+
+    # 1. VERIFICAR USUARIO
+    if user_id:
+        user_exists = db.execute(select(User.id).where(User.id == user_id)).scalar()
+        if not user_exists:
+            print(f"DEBUG: Usuario {user_id} no existe en DB. Limpiando sesión.")
+            request.session.clear()
+            return {"id": None, "name": None, "email": None, "picture": None, "profile_id": None}
+
+    # 2. VERIFICAR PERFIL
+    if profile_id:
         p_exists = db.execute(select(Profile.id).where(Profile.id == profile_id)).scalar()
         if not p_exists:
-            print(f"DEBUG: Perfil {profile_id} no encontrado en DB. Limpiando sesión.")
+            print(f"DEBUG: Perfil {profile_id} no encontrado en DB. Limpiando profile_id.")
             request.session.pop("profile_id", None)
             profile_id = None
 
@@ -150,6 +168,7 @@ def ui_results(request: Request, db: Session = Depends(get_db), cat: str = None,
                 "offer_cat": o.category,
                 "price": o.price,
                 "currency": o.currency,
+                "extra_info": getattr(o, "extra_info", {}) or {},
                 "rating_avg": round(r_avg, 1),
                 "rating_count": r_count
             })

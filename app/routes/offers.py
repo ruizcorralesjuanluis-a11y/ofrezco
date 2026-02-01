@@ -30,6 +30,7 @@ def create_offer(payload: OfferCreate, db: Session = Depends(get_db)):
             currency=payload.currency,
             available_now=payload.available_now,
             allergens=payload.allergens,
+            extra_info=payload.extra_info,
             status="DRAFT",
         )
 
@@ -50,8 +51,9 @@ def submit_for_review(offer_id: int, db: Session = Depends(get_db)):
     if not offer:
         raise HTTPException(status_code=404, detail="Offer no encontrada.")
 
+    limit = 180.0 if "Inmobiliaria" in (offer.category or "") else 15.0
     if not offer.video_path:
-        raise HTTPException(status_code=400, detail="Para enviar a revisión necesitas subir un vídeo (máx 15s).")
+        raise HTTPException(status_code=400, detail=f"Para enviar a revisión necesitas subir un vídeo (máx {int(limit/60) if limit >= 60 else int(limit)} {'min' if limit >= 60 else 's'}).")
 
     offer.status = "PUBLISHED" # Auto-publicar para demo (saltar revisión)
     db.commit()
@@ -165,9 +167,15 @@ def upload_offer_video(
             check=True,
         )
         duration = float((result.stdout or "").strip() or "0")
-        if duration > 15.0:
+        
+        limit = 180.0 if "Inmobiliaria" in (offer.category or "") else 15.0
+        
+        if duration > limit:
             os.remove(save_path)
-            raise HTTPException(status_code=400, detail=f"Vídeo demasiado largo ({duration:.1f}s). Máximo 15s.")
+            msg = f"Vídeo demasiado largo ({duration:.1f}s). Máximo 15s."
+            if limit > 15:
+                msg = f"Vídeo demasiado largo ({duration:.1f}s). Máximo {int(limit/60)} minutos para Inmobiliaria."
+            raise HTTPException(status_code=400, detail=msg)
     except FileNotFoundError:
         pass
     except HTTPException:

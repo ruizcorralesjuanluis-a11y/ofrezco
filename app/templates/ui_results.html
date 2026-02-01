@@ -111,6 +111,30 @@
           <div class="p-2">
             <div class="fw-bold text-truncate" style="font-size:14px;">{{ p.title }}</div>
             <div class="text-muted small text-truncate">{{ p.category }}</div>
+
+            <!-- EXTRAS INMOBILIARIA (Mosaic) -->
+            {% if p.extra_info and (p.extra_info.rooms or p.extra_info.sqm or p.extra_info.bathrooms or
+            p.extra_info.floor or p.extra_info.lift or p.extra_info.terrace or p.extra_info.ac or p.extra_info.parking)
+            %}
+            <div class="d-flex flex-wrap gap-1 mt-1 mb-1">
+              {% if p.extra_info.rooms %}<span class="badge bg-light text-dark border small" style="font-size:10px;">🛏
+                {{ p.extra_info.rooms }}</span>{% endif %}
+              {% if p.extra_info.sqm %}<span class="badge bg-light text-dark border small" style="font-size:10px;">📐 {{
+                p.extra_info.sqm }} m²</span>{% endif %}
+              {% if p.extra_info.bathrooms %}<span class="badge bg-light text-dark border small"
+                style="font-size:10px;">🚿 {{ p.extra_info.bathrooms }}</span>{% endif %}
+              {% if p.extra_info.floor %}<span class="badge bg-light text-dark border small" style="font-size:10px;">🏢
+                P. {{ p.extra_info.floor }}</span>{% endif %}
+              {% if p.extra_info.lift %}<span class="badge bg-light text-dark border small"
+                style="font-size:10px;">🛗</span>{% endif %}
+              {% if p.extra_info.terrace %}<span class="badge bg-light text-dark border small"
+                style="font-size:10px;">🌅</span>{% endif %}
+              {% if p.extra_info.ac %}<span class="badge bg-light text-dark border small"
+                style="font-size:10px;">❄️</span>{% endif %}
+              {% if p.extra_info.parking %}<span class="badge bg-light text-dark border small"
+                style="font-size:10px;">🚗</span>{% endif %}
+            </div>
+            {% endif %}
             {% if p.rating_count > 0 %}
             <div class="d-flex align-items-center gap-1 mt-1">
               <span class="text-warning fw-bold" style="font-size:13px;">★ {{ p.rating_avg }}</span>
@@ -167,6 +191,30 @@
             {% if p.rating_count > 0 %}
             <span>•</span>
             <span class="text-warning fw-bold">★ {{ p.rating_avg }} ({{ p.rating_count }})</span>
+            {% endif %}
+
+            <!-- EXTRAS INMOBILIARIA (List) -->
+            {% if p.extra_info and (p.extra_info.rooms or p.extra_info.sqm or p.extra_info.bathrooms or
+            p.extra_info.floor or p.extra_info.lift or p.extra_info.terrace or p.extra_info.ac or p.extra_info.parking)
+            %}
+            <div class="d-flex flex-wrap gap-2 mt-1">
+              {% if p.extra_info.rooms %}<span class="badge bg-info bg-opacity-10 text-info small"
+                style="font-size:10px;">🛏 {{ p.extra_info.rooms }} hab.</span>{% endif %}
+              {% if p.extra_info.sqm %}<span class="badge bg-info bg-opacity-10 text-info small"
+                style="font-size:10px;">📐 {{ p.extra_info.sqm }} m²</span>{% endif %}
+              {% if p.extra_info.bathrooms %}<span class="badge bg-info bg-opacity-10 text-info small"
+                style="font-size:10px;">🚿 {{ p.extra_info.bathrooms }} baños</span>{% endif %}
+              {% if p.extra_info.floor %}<span class="badge bg-info bg-opacity-10 text-info small"
+                style="font-size:10px;">🏢 Planta {{ p.extra_info.floor }}</span>{% endif %}
+              {% if p.extra_info.lift %}<span class="badge bg-info bg-opacity-10 text-info small"
+                style="font-size:10px;">🛗 Ascensor</span>{% endif %}
+              {% if p.extra_info.terrace %}<span class="badge bg-info bg-opacity-10 text-info small"
+                style="font-size:10px;">🌅 Terraza</span>{% endif %}
+              {% if p.extra_info.ac %}<span class="badge bg-info bg-opacity-10 text-info small"
+                style="font-size:10px;">❄️ AC</span>{% endif %}
+              {% if p.extra_info.parking %}<span class="badge bg-info bg-opacity-10 text-info small"
+                style="font-size:10px;">🚗 Garaje</span>{% endif %}
+            </div>
             {% endif %}
           </div>
         </div>

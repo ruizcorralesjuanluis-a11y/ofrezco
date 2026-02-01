@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Float
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Float, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -24,6 +24,7 @@ class Offer(Base):
     status = Column(String, default="DRAFT", nullable=False)  # DRAFT/PENDING/APPROVED/REJECTED
     video_path = Column(String, nullable=True)
     photo_path = Column(String, nullable=True)
+    extra_info = Column(JSON, nullable=True) # Datos extra (habitaciones, m2, etc.)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)

@@ -26,7 +26,7 @@
 
     <hr class="my-4">
 
-    <p class="muted small mb-3">2. Ahora, graba un <b>vídeo corto (max 15s)</b> presentándote.</p>
+    <p class="muted small mb-3">2. Ahora, graba un <b id="videoInfoLabel">vídeo corto (max 15s)</b> presentándote.</p>
     <label class="btn btn-outline-primary pill d-inline-flex align-items-center gap-2">
       📹 Grabar / Subir Vídeo
       <input id="wVideo" type="file" accept="video/*" capture="environment" style="display:none"
@@ -79,6 +79,14 @@
     if (d.service_radius_km) lines.push(`<b>Radio:</b> ${d.service_radius_km} km`);
     lines.push(`<b>Disponible ahora:</b> ${d.available_now ? "Sí" : "No"}`);
     if (d.price != null) lines.push(`<b>Precio:</b> ${d.price} €`);
+    if (d.rooms) lines.push(`<b>Habitaciones:</b> ${d.rooms}`);
+    if (d.sqm) lines.push(`<b>Metros:</b> ${d.sqm} m²`);
+    if (d.bathrooms) lines.push(`<b>Baños:</b> ${d.bathrooms}`);
+    if (d.floor) lines.push(`<b>Planta:</b> ${d.floor}`);
+    if (d.lift) lines.push(`<b>Ascensor:</b> Sí`);
+    if (d.terrace) lines.push(`<b>Terraza:</b> Sí`);
+    if (d.ac) lines.push(`<b>Aire Acond.:</b> Sí`);
+    if (d.parking) lines.push(`<b>Garaje:</b> Sí`);
     s.innerHTML = lines.join("<br>");
   }
   async function publish() {
@@ -112,7 +120,17 @@
       price: (d.price == null || d.price === "" ? null : Number(d.price)),
       currency: "EUR",
       available_now: !!d.available_now,
-      allergens: d.specialty ? String(d.specialty) : null
+      allergens: d.specialty ? String(d.specialty) : null,
+      extra_info: (d.rooms || d.sqm || d.bathrooms || d.floor || d.lift || d.terrace || d.ac || d.parking) ? {
+        rooms: d.rooms || null,
+        sqm: d.sqm || null,
+        bathrooms: d.bathrooms || null,
+        floor: d.floor || null,
+        lift: !!d.lift,
+        terrace: !!d.terrace,
+        ac: !!d.ac,
+        parking: !!d.parking
+      } : null
     };
 
     console.log("Publishing payload:", payload);
@@ -189,6 +207,13 @@
     const pid = localStorage.getItem("me_profile_id");
     const el = document.getElementById("activeProfileLabel");
     if (pid) el.textContent = "#" + pid;
+
+    const d = loadDraft();
+    const vLabel = document.getElementById("videoInfoLabel");
+    if (d.category && d.category.includes("Inmobiliaria")) {
+      vLabel.innerHTML = "vídeo detallado (max 3 min)";
+    }
+
     renderSummary();
   })();
 </script>

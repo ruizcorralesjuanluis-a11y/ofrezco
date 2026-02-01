@@ -11,6 +11,12 @@ router = APIRouter()
 
 @router.post("/profiles", response_model=ProfileOut)
 def create_profile(payload: ProfileCreate, request: Request, db: Session = Depends(get_db)):
+    # Verificar que el usuario existe (evitar IntegrityError por FK)
+    from app.models.user import User
+    user = db.get(User, payload.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="El usuario no existe. Por favor, cierra sesión e inicia de nuevo.")
+
     profile = Profile(
         user_id=payload.user_id,
         profile_type=payload.profile_type,

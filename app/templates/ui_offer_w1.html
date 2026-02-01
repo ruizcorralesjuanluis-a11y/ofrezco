@@ -37,6 +37,50 @@
       <span class="ios-label">Especialidad</span>
       <input id="wSpecialty" class="ios-input text-end" style="width:60%;" placeholder="Opcional" />
     </li>
+
+    <!-- BLOQUE INMOBILIARIA -->
+    <div id="blockRealEstate" style="display:none;">
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-top border-bottom">
+        <span class="ios-label">Habitaciones</span>
+        <input type="number" id="wRooms" class="ios-input text-end" style="width:60%;" placeholder="0" />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Metros (m²)</span>
+        <input type="number" id="wSqm" class="ios-input text-end" style="width:60%;" placeholder="0" />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Baños</span>
+        <input type="number" id="wBathrooms" class="ios-input text-end" style="width:60%;" placeholder="0" />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Planta</span>
+        <input type="number" id="wFloor" class="ios-input text-end" style="width:60%;" placeholder="0" />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Ascensor</span>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="wLift">
+        </div>
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Terraza</span>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="wTerrace">
+        </div>
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Aire Acond.</span>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="wAC">
+        </div>
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Garaje</span>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="wParking">
+        </div>
+      </li>
+    </div>
   </ul>
 </div>
 
@@ -64,6 +108,16 @@
     const category = catSelect.value.trim();
     const title = document.getElementById("wTitle").value.trim();
     const specialty = document.getElementById("wSpecialty").value.trim();
+    const rooms = document.getElementById("wRooms").value;
+    const sqm = document.getElementById("wSqm").value;
+    const bathrooms = document.getElementById("wBathrooms").value;
+
+    const floor = document.getElementById("wFloor").value;
+    const lift = document.getElementById("wLift").checked;
+    const terrace = document.getElementById("wTerrace").checked;
+    const ac = document.getElementById("wAC").checked;
+    const parking = document.getElementById("wParking").checked;
+
     if (!category) { alert("Selecciona una categoría."); return; }
     if (title.length < 3) { alert("Escribe un título (mín. 3 caracteres)."); return; }
 
@@ -74,7 +128,11 @@
 
     // Guardamos también el tipo de oferta para usarlo en pasos siguientes
     const offerType = '{{ offer_type }}';
-    saveDraft({ category, category_group, title, specialty, offer_type: offerType });
+    saveDraft({
+      category, category_group, title, specialty, offer_type: offerType,
+      rooms, sqm, bathrooms,
+      floor, lift, terrace, ac, parking
+    });
 
     location.href = "/ui/offers/new/2";
   }
@@ -131,25 +189,39 @@
   if (d.category) document.getElementById("wCategory").value = d.category;
   if (d.title) document.getElementById("wTitle").value = d.title;
   if (d.specialty) document.getElementById("wSpecialty").value = d.specialty;
+  if (d.rooms) document.getElementById("wRooms").value = d.rooms;
+  if (d.sqm) document.getElementById("wSqm").value = d.sqm;
+  if (d.bathrooms) document.getElementById("wBathrooms").value = d.bathrooms;
+  if (d.floor) document.getElementById("wFloor").value = d.floor;
+  if (d.lift) document.getElementById("wLift").checked = d.lift;
+  if (d.terrace) document.getElementById("wTerrace").checked = d.terrace;
+  if (d.ac) document.getElementById("wAC").checked = d.ac;
+  if (d.parking) document.getElementById("wParking").checked = d.parking;
 
   // Detectar cambio de categoría para ocultar/mostrar especialidad
   document.getElementById("wCategory").addEventListener("change", function () {
     const val = this.value;
-    const isVenta = salesCategories.includes(val);
-    const rowSpec = document.getElementById("rowSpecialty");
+    const isInmob = val.includes("Inmobiliaria");
+    const blockRE = document.getElementById("blockRealEstate");
 
     // Si estamos en modo "sales" estricto, ocultamos siempre
     if (offerType === 'sales') {
       rowSpec.style.setProperty("display", "none", "important");
       document.getElementById("wSpecialty").value = "";
-      return;
+    } else {
+      if (isVenta) {
+        rowSpec.style.display = "none";
+        document.getElementById("wSpecialty").value = "";
+      } else {
+        rowSpec.style.display = "flex";
+      }
     }
 
-    if (isVenta) {
-      rowSpec.style.display = "none";
-      document.getElementById("wSpecialty").value = "";
+    if (isInmob) {
+      blockRE.style.display = "block";
     } else {
-      rowSpec.style.display = "flex";
+      blockRE.style.display = "none";
+      // Opcional: limpiar valores si no es inmo? Mejor no por si se equivoca
     }
   });
 
