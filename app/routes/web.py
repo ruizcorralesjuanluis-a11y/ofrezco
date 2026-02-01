@@ -235,7 +235,7 @@ def ui_profile(request: Request, profile_id: int, offer_id: int = None, db: Sess
             "service_offers": service_offers,
             "sales_offers": sales_offers,
             "user": get_user_context(request, db),
-            "is_own": request.session.get("profile_id") == profile_id
+            "is_me": request.session.get("profile_id") == profile_id
         }
     )
 
@@ -320,6 +320,7 @@ def ui_offer_w2(request: Request, db: Session = Depends(get_db)):
         "page_title": "Paso 2: Ubicación",
         "back_url": "/ui/offers/new/1",
         "user": get_user_context(request, db),
+        "sales_categories": get_sales_categories(),
     })
 
 
@@ -332,6 +333,7 @@ def ui_offer_w3(request: Request, db: Session = Depends(get_db)):
         "page_title": "Paso 3: Precio",
         "back_url": "/ui/offers/new/2",
         "user": get_user_context(request, db),
+        "sales_categories": get_sales_categories(),
     })
 
 
