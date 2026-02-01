@@ -1,9 +1,4 @@
 import os
-
-# Permitir OAuth sin HTTPS solo si estamos en local
-if os.getenv("RENDER") is None:
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 import traceback
@@ -50,7 +45,11 @@ def root():
 
 @app.get("/api/v1/health", tags=["health"])
 def health():
-    return {"ok": True}
+    return {
+        "ok": True, 
+        "render": os.getenv("RENDER") is not None,
+        "google_id": bool(settings.GOOGLE_CLIENT_ID)
+    }
 
 app.include_router(users_router, prefix="/api/v1", tags=["users"])
 app.include_router(profiles_router, prefix="/api/v1", tags=["profiles"])

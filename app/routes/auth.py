@@ -27,12 +27,16 @@ async def login(request: Request):
     if not settings.GOOGLE_CLIENT_ID:
         return RedirectResponse(url="/ui?error=missing_google_config")
     
-    # OJO: Debe coincidir EXACTAMENTE con lo puesto en Google Console
-    redirect_uri = request.url_for('auth_callback')
+    # En Render (u otros proxies), url_for puede devolver http en lugar de https.
+    # Forzamos https si estamos en producción.
+    redirect_uri = str(request.url_for('auth_callback'))
+    if os.getenv("RENDER"):
+        redirect_uri = redirect_uri.replace("http://", "https://")
+    
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
-@router.get("/auth")
+@router.get("/auth/google/callback")
 async def auth_callback(request: Request, db: Session = Depends(get_db)):
     try:
         token = await oauth.google.authorize_access_token(request)
