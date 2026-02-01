@@ -18,11 +18,19 @@ from app.routes.ratings import router as ratings_router
 from app.routes.interests import router as interests_router
 
 app = FastAPI(title="Ofrezco", version="0.1.0")
-VERSION = "V4-DEBUG-2026-02-01"
+VERSION = "V4-DEBUG-2026-02-01-RECOVERY"
 
 @app.get("/ping")
 def ping():
-    return {"status": "ok", "version": VERSION}
+    return {"status": "ok", "version": VERSION, "msg": "Si ves esto, el servidor esta VIVO"}
+
+# --- FALLBACK PARA ERRORES DE IMPORTACIÓN O ARRANQUE ---
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Error Critico de Arranque", "error": str(exc), "trace": traceback.format_exc()},
+    )
 
 # Configuración de sesión mejorada para Render (HTTPS)
 app.add_middleware(
@@ -41,7 +49,11 @@ def on_startup():
     print(f"GOOGLE_CLIENT_SECRET presente: {bool(settings.GOOGLE_CLIENT_SECRET)}")
     print(f"SECRET_KEY presente: {bool(settings.SECRET_KEY)}")
     print("---------------------------------------------")
-    init_db()
+    try:
+        init_db()
+        print("DEBUG: Base de datos inicializada correctamente.")
+    except Exception as e:
+        print(f"ERROR CRÍTICO inicializando DB: {str(e)}")
 
 # Redirigir la raíz directamente a la UI visual
 @app.get("/")
