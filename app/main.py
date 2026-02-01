@@ -18,6 +18,11 @@ from app.routes.ratings import router as ratings_router
 from app.routes.interests import router as interests_router
 
 app = FastAPI(title="Ofrezco", version="0.1.0")
+VERSION = "V4-DEBUG-2026-02-01"
+
+@app.get("/ping")
+def ping():
+    return {"status": "ok", "version": VERSION}
 
 # Configuración de sesión mejorada para Render (HTTPS)
 app.add_middleware(
