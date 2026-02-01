@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card-soft p-4">
+  <h2 class="fw-bold mb-1">Publicar oferta</h2>
+  <p class="muted mb-3">
+    Selecciona tu <b>Usuario + Perfil</b> en “Cuenta”. Luego crea el anuncio, sube/graba vídeo y envía a revisión.
+  </p>
+
+  <div class="alert alert-light border d-flex gap-2 align-items-center flex-wrap">
+    <span class="fw-bold">Perfil activo:</span>
+    <span id="activeProfileLabel" class="muted">(sin seleccionar)</span>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label">Tipo</label>
+      <select id="offer_kind" class="form-select">
+        <option value="SERVICIO">Servicio (Profesional)</option>
+        <option value="COMIDA">Comida (Comunitario)</option>
+        <option value="AYUDA">Ayuda (Comunitario)</option>
+        <option value="PRODUCTO">Producto (Comunitario)</option>
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Disponible ahora</label>
+      <select id="available_now" class="form-select">
+        <option value="true">Sí</option>
+        <option value="false" selected>No</option>
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Categoría *</label>
+      <input id="category" class="form-control" placeholder="Ej. Electricidad / Comida casera">
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Título *</label>
+      <input id="title" class="form-control" placeholder="Ej. Electricista urgente / Croquetas hoy">
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Descripción</label>
+      <textarea id="description" class="form-control" rows="3" placeholder="Detalles, horario, zona, etc."></textarea>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Precio (opcional)</label>
+      <input id="price" type="number" step="0.01" class="form-control" placeholder="Ej. 8.00">
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Moneda</label>
+      <input id="currency" class="form-control" value="EUR">
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Alérgenos (solo comida)</label>
+      <input id="allergens" class="form-control" placeholder="gluten, leche, huevo...">
+    </div>
+
+    <div class="col-12 d-flex gap-2 mt-2 flex-wrap">
+      <button class="btn btn-dark rounded-2xl px-4" onclick="createDraft()">1) Crear anuncio</button>
+      <button class="btn btn-outline-dark rounded-2xl px-4" onclick="submitReview()">3) Enviar a revisión</button>
+      <a class="btn btn-outline-dark rounded-2xl" href="/ui/admin">Panel Admin</a>
+    </div>
+
+    <div class="col-12">
+      <pre id="result" class="mt-3 p-3 rounded-2xl bg-light border" style="display:none; white-space:pre-wrap;"></pre>
+    </div>
+
+    <div class="col-12">
+      <hr class="my-4">
+      <h5 class="fw-bold mb-1">2) Vídeo del anuncio (máx 15s)</h5>
+      <div class="muted mb-3">Primero crea el anuncio. Luego sube o graba el vídeo.</div>
+
+      <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label">Offer ID</label>
+          <input id="video_offer_id" class="form-control" readonly placeholder="Se rellena al crear anuncio">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Subir archivo</label>
+          <input id="video_file" type="file" accept="video/mp4,video/webm" class="form-control">
+        </div>
+
+        <div class="col-md-2 d-grid">
+          <button class="btn btn-outline-dark rounded-2xl" onclick="uploadVideo()">Subir</button>
+        </div>
+      </div>
+
+      <div class="card-soft p-3 mt-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div>
+            <div class="fw-bold">Grabar vídeo</div>
+            <div class="muted small">Máximo 15s · Se corta automáticamente</div>
+          </div>
+          <div class="d-flex gap-2">
+            <button id="btnStart" class="btn btn-outline-dark rounded-2xl" type="button" onclick="startRecording()">🎥 Grabar</button>
+            <button id="btnStop" class="btn btn-outline-dark rounded-2xl" type="button" onclick="stopRecording(true)" disabled>⏹️ Parar</button>
+            <button id="btnUploadRec" class="btn btn-outline-dark rounded-2xl" type="button" onclick="uploadRecorded()" disabled>⬆️ Subir grabación</button>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-2">
+          <div class="col-md-6">
+            <div class="muted small mb-1">Cámara</div>
+            <video id="camPreview" playsinline muted autoplay
+              style="width:100%; border-radius:12px; border:1px solid #e5e7eb; background:#000;"></video>
+          </div>
+          <div class="col-md-6">
+            <div class="muted small mb-1">Grabación</div>
+            <video id="recPreview" playsinline controls
+              style="width:100%; border-radius:12px; border:1px solid #e5e7eb; background:#000;"></video>
+            <div class="muted small mt-2" id="recInfo"></div>
+          </div>
+        </div>
+      </div>
+
+      <pre id="video_result" class="mt-3 p-3 rounded-2xl bg-light border" style="display:none; white-space:pre-wrap;"></pre>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showBox(id, text){
+  const el = document.getElementById(id);
+  el.style.display = "block";
+  el.textContent = text;
+}
+
+function getMeProfileId(){
+  const v = localStorage.getItem("me_profile_id");
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function updateActiveProfileLabel(){
+  const pid = getMeProfileId();
+  const sel = document.getElementById("meProfileSelect");
+  const label = document.getElementById("activeProfileLabel");
+  if (!pid || !sel || !sel.selectedOptions.length) {
+    label.textContent = "(sin seleccionar)";
+    return;
+  }
+  label.textContent = sel.selectedOptions[0].textContent;
+}
+setInterval(updateActiveProfileLabel, 500);
+
+/* 1) Crear anuncio (DRAFT) */
+async function createDraft(){
+  const me = getMeProfileId();
+  if (!me){ alert("Selecciona tu perfil en Cuenta."); return; }
+
+  const category = document.getElementById("category").value.trim();
+  const title = document.getElementById("title").value.trim();
+  if (!category || !title){ alert("Rellena Categoría y Título."); return; }
+
+  const payload = {
+    profile_id: me,
+    offer_kind: document.getElementById("offer_kind").value,
+    category,
+    title,
+    description: document.getElementById("description").value.trim() || null,
+    price: document.getElementById("price").value ? Number(document.getElementById("price").value) : null,
+    currency: document.getElementById("currency").value.trim() || "EUR",
+    available_now: document.getElementById("available_now").value === "true",
+    allergens: document.getElementById("allergens").value.trim() || null
+  };
+
+  const res = await fetch("/api/v1/offers", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(payload)
+  });
+
+  const text = await res.text();
+  showBox("result", text);
+
+  if (!res.ok) return;
+
+  const data = JSON.parse(text);
+  document.getElementById("video_offer_id").value = data.id;
+}
+
+/* 2) Subir vídeo */
+async function uploadVideo(){
+  const offerId = document.getElementById("video_offer_id").value.trim();
+  const fileInput = document.getElementById("video_file");
+  if (!offerId){ showBox("video_result","Primero crea el anuncio."); return; }
+  if (!fileInput.files.length){ showBox("video_result","Selecciona un vídeo."); return; }
+
+  const fd = new FormData();
+  fd.append("file", fileInput.files[0]);
+
+  const res = await fetch(`/api/v1/offers/${offerId}/video`, { method:"POST", body: fd });
+  showBox("video_result", await res.text());
+}
+
+/* 3) Enviar a revisión (PENDING) */
+async function submitReview(){
+  const offerId = document.getElementById("video_offer_id").value.trim();
+  if (!offerId){ showBox("result","Primero crea el anuncio."); return; }
+
+  const res = await fetch(`/api/v1/offers/${offerId}/submit`, { method:"POST" });
+  showBox("result", await res.text());
+}
+
+/* Grabación 15s */
+let mediaStream=null, mediaRecorder=null, recordedChunks=[], recordedBlob=null, recordTimer=null;
+
+function supportsRecording(){ return !!(navigator.mediaDevices && window.MediaRecorder); }
+
+async function startRecording(){
+  if(!supportsRecording()){ showBox("video_result","Tu navegador no soporta grabación. Sube archivo."); return; }
+  const offerId = document.getElementById("video_offer_id").value.trim();
+  if(!offerId){ showBox("video_result","Primero crea el anuncio."); return; }
+
+  recordedChunks=[]; recordedBlob=null;
+  document.getElementById("btnUploadRec").disabled = true;
+  document.getElementById("recInfo").textContent = "";
+
+  try{
+    mediaStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
+    document.getElementById("camPreview").srcObject = mediaStream;
+
+    let mimeType="";
+    if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) mimeType="video/webm;codecs=vp8,opus";
+    else if (MediaRecorder.isTypeSupported("video/webm")) mimeType="video/webm";
+
+    mediaRecorder = new MediaRecorder(mediaStream, mimeType ? {mimeType} : undefined);
+    mediaRecorder.ondataavailable = (e)=>{ if(e.data && e.data.size>0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = ()=>{
+      const type = mediaRecorder.mimeType || "video/webm";
+      recordedBlob = new Blob(recordedChunks, {type});
+      document.getElementById("recPreview").src = URL.createObjectURL(recordedBlob);
+      document.getElementById("btnUploadRec").disabled = false;
+      document.getElementById("recInfo").textContent = `Grabación lista · ${(recordedBlob.size/1024/1024).toFixed(2)} MB`;
+    };
+
+    mediaRecorder.start();
+    document.getElementById("btnStart").disabled=true;
+    document.getElementById("btnStop").disabled=false;
+
+    showBox("video_result","Grabando… se parará a los 15s.");
+    recordTimer=setTimeout(()=>stopRecording(true),15000);
+
+  }catch(e){
+    showBox("video_result","No se pudo acceder a cámara/micrófono. Revisa permisos.");
+  }
+}
+
+function stopRecording(auto=false){
+  if(recordTimer) clearTimeout(recordTimer);
+  recordTimer=null;
+
+  try{ if(mediaRecorder && mediaRecorder.state!=="inactive") mediaRecorder.stop(); }catch{}
+  try{ if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null; } }catch{}
+  document.getElementById("camPreview").srcObject=null;
+
+  document.getElementById("btnStart").disabled=false;
+  document.getElementById("btnStop").disabled=true;
+
+  showBox("video_result", auto ? "Grabación detenida (15s)." : "Grabación detenida.");
+}
+
+async function uploadRecorded(){
+  const offerId = document.getElementById("video_offer_id").value.trim();
+  if(!offerId){ showBox("video_result","Primero crea el anuncio."); return; }
+  if(!recordedBlob){ showBox("video_result","No hay grabación."); return; }
+
+  const ext = recordedBlob.type.includes("webm") ? "webm" : "mp4";
+  const file = new File([recordedBlob], `offer_${offerId}.${ext}`, { type: recordedBlob.type });
+
+  const fd = new FormData();
+  fd.append("file", file);
+
+  const res = await fetch(`/api/v1/offers/${offerId}/video`, { method:"POST", body: fd });
+  showBox("video_result", await res.text());
+}
+</script>
+{% endblock %}

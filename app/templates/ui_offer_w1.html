@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+<!-- Formulario estilo iOS -->
+<div class="card-soft overflow-hidden p-0 mt-3">
+  <div class="px-3 py-2 bg-light border-bottom small fw-bold text-uppercase muted"
+    style="letter-spacing:1px; font-size:11px;">
+    PASO 1 · INFORMACIÓN BÁSICA
+  </div>
+
+  <ul class="ios-list m-0 p-0" style="list-style:none;">
+    <!-- Categoría -->
+    <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+      <span class="ios-label">Categoría</span>
+      <select id="wCategory" class="ios-input text-end" style="width:60%; direction:rtl; background:transparent;">
+        <option value="">Seleccionar...</option>
+        {% for main, subs in categories.items() %}
+        <optgroup label="{{ main }}">
+          {% for sub in subs %}
+          <option value="{{ sub }}">{{ sub }}</option>
+          {% endfor %}
+        </optgroup>
+        {% endfor %}
+      </select>
+    </li>
+
+    <!-- Título -->
+    <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+      <span class="ios-label">Título</span>
+      <input id="wTitle" class="ios-input text-end" style="width:60%;" placeholder="Ej. Electricista barato" />
+    </li>
+
+    <!-- Especialidad -->
+    <li class="ios-row d-flex align-items-center justify-content-between p-3" id="rowSpecialty" {% if
+      offer_type=='sales' %} style="display:none !important;" {% endif %}>
+      <span class="ios-label">Especialidad</span>
+      <input id="wSpecialty" class="ios-input text-end" style="width:60%;" placeholder="Opcional" />
+    </li>
+  </ul>
+</div>
+
+<div class="d-flex gap-2 mt-3">
+  <a class="btn btn-light flex-grow-1 pill" href="/ui">Cancelar</a>
+  <button class="btn btn-success flex-grow-1 pill" onclick="wNext()">Siguiente</button>
+</div>
+
+<script>
+  function wDraftKey() {
+    const pid = localStorage.getItem("me_profile_id") || "";
+    return "draft_offer_" + (pid || "anon");
+  }
+  function loadDraft() {
+    try { return JSON.parse(localStorage.getItem(wDraftKey()) || "{}"); } catch (e) { return {}; }
+  }
+  function saveDraft(patch) {
+    const d = loadDraft();
+    const n = Object.assign({}, d, patch);
+    localStorage.setItem(wDraftKey(), JSON.stringify(n));
+    return n;
+  }
+  function wNext() {
+    const catSelect = document.getElementById("wCategory");
+    const category = catSelect.value.trim();
+    const title = document.getElementById("wTitle").value.trim();
+    const specialty = document.getElementById("wSpecialty").value.trim();
+    if (!category) { alert("Selecciona una categoría."); return; }
+    if (title.length < 3) { alert("Escribe un título (mín. 3 caracteres)."); return; }
+
+    // Obtener el grupo (categoría padre)
+    const selectedOption = catSelect.options[catSelect.selectedIndex];
+    const parentGroup = selectedOption.parentElement;
+    const category_group = parentGroup.tagName === 'OPTGROUP' ? parentGroup.label : "Otros";
+
+    // Guardamos también el tipo de oferta para usarlo en pasos siguientes
+    const offerType = '{{ offer_type }}';
+    saveDraft({ category, category_group, title, specialty, offer_type: offerType });
+
+    location.href = "/ui/offers/new/2";
+  }
+  (function init() {
+    // Definimos el tipo de flujo actual (si existe)
+    const offerType = '{{ offer_type }}';
+    const salesCategories = {{ sales_categories | tojson
+  }};
+
+  // Cargar borrador
+  let d = loadDraft();
+
+  // Lógica de limpieza preventiva si cambiamos de flujo
+  if (d && Object.keys(d).length > 0) {
+    let mismatch = false;
+
+    // Si estamos en un modo específico (sales o service)
+    if (offerType) {
+      // 1. Mismatch de TIPO DECLARADO
+      if (d.offer_type !== offerType) {
+        mismatch = true;
+      }
+      // 2. Mismatch de CONTENIDO (Categoría incompatible con el modo)
+      else if (d.category) {
+        const isCatVenta = salesCategories.includes(d.category);
+        if (offerType === 'sales' && !isCatVenta) mismatch = true;
+        if (offerType === 'service' && isCatVenta) mismatch = true;
+      }
+    }
+    // Fallback legacy (sin offerType en URL)
+    else if (d.category) {
+      // Si no hay modo forzado, no hacemos nada agresivo
+    }
+
+    if (mismatch) {
+      console.log("Limpiando borrador. Mode:", offerType, "Stored:", d.offer_type);
+      localStorage.removeItem(wDraftKey());
+      d = {}; // Reiniciar variable local y UI
+
+      // Limpiar campos visuales
+      document.getElementById("wCategory").value = "";
+      document.getElementById("wTitle").value = "";
+      document.getElementById("wSpecialty").value = "";
+    }
+  }
+
+  // ADAPTACIÓN DE TEXTOS PARA 'VENTAS'
+  if (offerType === 'sales') {
+    document.getElementById("wTitle").placeholder = "Ej. iPhone 12, Sofá cama...";
+    // Forzar ocultar specialty
+    document.getElementById("rowSpecialty").style.setProperty("display", "none", "important");
+  }
+
+  if (d.category) document.getElementById("wCategory").value = d.category;
+  if (d.title) document.getElementById("wTitle").value = d.title;
+  if (d.specialty) document.getElementById("wSpecialty").value = d.specialty;
+
+  // Detectar cambio de categoría para ocultar/mostrar especialidad
+  document.getElementById("wCategory").addEventListener("change", function () {
+    const val = this.value;
+    const isVenta = salesCategories.includes(val);
+    const rowSpec = document.getElementById("rowSpecialty");
+
+    // Si estamos en modo "sales" estricto, ocultamos siempre
+    if (offerType === 'sales') {
+      rowSpec.style.setProperty("display", "none", "important");
+      document.getElementById("wSpecialty").value = "";
+      return;
+    }
+
+    if (isVenta) {
+      rowSpec.style.display = "none";
+      document.getElementById("wSpecialty").value = "";
+    } else {
+      rowSpec.style.display = "flex";
+    }
+  });
+
+  // Trigger para ajustar
+  if (document.getElementById("wCategory").value) {
+    document.getElementById("wCategory").dispatchEvent(new Event("change"));
+  }
+  }) ();
+</script>
+{% endblock %}

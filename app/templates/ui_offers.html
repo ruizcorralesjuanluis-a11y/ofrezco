@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h2 class="fw-bold mb-0">Ofertas</h2>
+    <div class="muted">Lista rápida (filtros básicos).</div>
+  </div>
+  <a class="btn btn-brand rounded-2xl" href="/ui/offers/new">+ Nueva oferta</a>
+</div>
+
+<div class="card-soft p-3 mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label">Tipo</label>
+      <select id="f_kind" class="form-select">
+        <option value="">Todos</option>
+        <option value="SERVICIO">SERVICIO</option>
+        <option value="COMIDA">COMIDA</option>
+        <option value="AYUDA">AYUDA</option>
+        <option value="PRODUCTO">PRODUCTO</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Disponible ahora</label>
+      <select id="f_av" class="form-select">
+        <option value="">Cualquiera</option>
+        <option value="true">Sí</option>
+        <option value="false">No</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Profile ID</label>
+      <input id="f_profile" class="form-control" placeholder="Ej. 1">
+    </div>
+    <div class="col-md-3 d-grid">
+      <button class="btn btn-outline-dark rounded-2xl" onclick="loadOffers()">Filtrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="list" class="vstack gap-3"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function badge(kind){
+  return `<span class="badge bg-dark-subtle text-dark border">${kind}</span>`;
+}
+
+async function loadOffers(){
+  const kind = document.getElementById('f_kind').value;
+  const av = document.getElementById('f_av').value;
+  const profile = document.getElementById('f_profile').value.trim();
+
+  const params = new URLSearchParams();
+  if (kind) params.set("offer_kind", kind);
+  if (av) params.set("available_now", av);
+  if (profile) params.set("profile_id", profile);
+
+  const res = await fetch("/api/v1/offers?" + params.toString());
+  const data = await res.json();
+
+  const list = document.getElementById('list');
+  list.innerHTML = "";
+
+  for (const o of data){
+    const price = (o.price !== null && o.price !== undefined) ? `${o.price} ${o.currency}` : "—";
+    const avail = o.available_now ? `<span class="badge text-bg-success">Disponible</span>` : `<span class="badge text-bg-secondary">No disponible</span>`;
+    list.innerHTML += `
+      <div class="card-soft p-3">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+          <div>
+            <div class="d-flex gap-2 align-items-center mb-1">
+              ${badge(o.offer_kind)} ${avail}
+              <span class="muted">· Profile #${o.profile_id}</span>
+            </div>
+            <div class="fw-bold fs-5">${o.title}</div>
+            <div class="muted">${o.category}</div>
+            ${o.description ? `<div class="mt-2">${o.description}</div>` : ""}
+            ${o.allergens ? `<div class="mt-2 small muted">Alérgenos: ${o.allergens}</div>` : ""}
+          </div>
+          <div class="text-end">
+            <div class="fw-bold">${price}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (data.length === 0){
+    list.innerHTML = `<div class="card-soft p-4 text-center muted">No hay ofertas con esos filtros.</div>`;
+  }
+}
+
+loadOffers();
+</script>
+{% endblock %}

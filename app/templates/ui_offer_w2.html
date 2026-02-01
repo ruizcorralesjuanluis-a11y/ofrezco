@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="ios-screen">
+  <div class="ios-section d-flex align-items-center gap-2">
+    <a class="btn btn-link p-0" href="/ui/offers/new/1" style="text-decoration:none;font-size:20px;">←</a>
+    <div class="fw-black" style="font-weight:900;font-size:22px;letter-spacing:-.4px;">Ubicación</div>
+    <div class="ms-auto muted" style="font-size:13px;">2/4</div>
+  </div>
+</div>
+
+<!-- Formulario estilo iOS -->
+<div class="card-soft overflow-hidden p-0 mt-3">
+  <div class="px-3 py-2 bg-light border-bottom small fw-bold text-uppercase muted"
+    style="letter-spacing:1px; font-size:11px;">
+    PASO 2 · ÁREA DE SERVICIO
+  </div>
+
+  <ul class="ios-list m-0 p-0" style="list-style:none;">
+    <!-- Zona -->
+    <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+      <span class="ios-label">Zona</span>
+      <input id="wZone" class="ios-input text-end" style="width:60%;" placeholder="Ej. Madrid Centro" />
+    </li>
+
+    <!-- Radio -->
+    <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+      <span class="ios-label">Radio máx.</span>
+      <select id="wRadius" class="ios-input text-end" style="width:100px; direction:rtl; background:transparent;">
+        <option value="5">5 km</option>
+        <option value="10">10 km</option>
+        <option value="25">25 km</option>
+        <option value="50">50 km</option>
+      </select>
+    </li>
+
+    <!-- Geo -->
+    <li class="ios-row d-flex align-items-center justify-content-between p-3" onclick="useGeo()" style="cursor:pointer">
+      <div class="d-flex flex-column">
+        <span class="ios-label text-primary">Usar mi ubicación actual</span>
+        <span class="ios-subtle mt-1" id="geoLabel">No guardada aún</span>
+      </div>
+      <span class="ios-chevron text-primary">📍</span>
+    </li>
+  </ul>
+</div>
+
+<div class="d-flex gap-2 mt-3">
+  <a class="btn btn-light flex-grow-1 pill" href="/ui/offers/new/1">Atrás</a>
+  <button class="btn btn-success flex-grow-1 pill" onclick="wNext()">Siguiente</button>
+</div>
+
+<script>
+  function wDraftKey() {
+    const pid = localStorage.getItem("me_profile_id") || "";
+    return "draft_offer_" + (pid || "anon");
+  }
+  function loadDraft() { try { return JSON.parse(localStorage.getItem(wDraftKey()) || "{}"); } catch (e) { return {}; } }
+  function saveDraft(patch) {
+    const d = loadDraft();
+    const n = Object.assign({}, d, patch);
+    localStorage.setItem(wDraftKey(), JSON.stringify(n));
+    return n;
+  }
+  function showGeo(d) {
+    const el = document.getElementById("geoLabel");
+    if (d.lat && d.lng) el.textContent = `Ubicación guardada: ${d.lat.toFixed(5)}, ${d.lng.toFixed(5)}`;
+    else el.textContent = "Sin ubicación guardada";
+  }
+  async function useGeo() {
+    if (!navigator.geolocation) {
+      alert("Tu dispositivo no soporta geolocalización o está bloqueada.");
+      return;
+    }
+
+    const geoLabel = document.getElementById("geoLabel");
+    geoLabel.textContent = "Obteniendo ubicación...";
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        // Intentar reverse geocoding para poner la zona bonita
+        try {
+          const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+          const resp = await fetch(url);
+          if (resp.ok) {
+            const data = await resp.json();
+            const city = data.address.city || data.address.town || data.address.village || "Ubicación detectada";
+            document.getElementById("wZone").value = city;
+            saveDraft({ zone_text: city });
+          }
+        } catch (e) { console.error(e); }
+
+        const d = saveDraft({ lat, lng });
+        showGeo(d);
+      },
+      (err) => {
+        let msg = "Error de ubicación.";
+        if (err.code === 1) msg = "Permiso denegado. Activa la ubicación en tu navegador.";
+        else if (err.code === 2) msg = "No se pudo detectar la señal GPS.";
+        else if (err.code === 3) msg = "Tiempo de espera agotado.";
+
+        // HTTPS warning for mobile
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+          msg += " (Probablemente requiera HTTPS)";
+        }
+
+        geoLabel.textContent = "Error: " + msg;
+        alert(msg);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+  function wNext() {
+    const zone = document.getElementById("wZone").value.trim();
+    const radius_km = parseInt(document.getElementById("wRadius").value, 10);
+    if (zone.length < 2 && !(loadDraft().lat && loadDraft().lng)) {
+      alert("Indica una zona o usa tu ubicación.");
+      return;
+    }
+    saveDraft({ zone_text: zone, service_radius_km: radius_km });
+    location.href = "/ui/offers/new/3";
+  }
+  (function init() {
+    const d = loadDraft();
+    if (d.zone_text) document.getElementById("wZone").value = d.zone_text;
+    if (d.service_radius_km) document.getElementById("wRadius").value = String(d.service_radius_km);
+    showGeo(d);
+
+    // Auto-trigger geo si no hay datos
+    if (!d.lat && !d.lng && !d.zone_text) {
+      useGeo();
+    }
+
+    // Lógica de visibilidad (Venta vs Servicio)
+    const salesCategories = {{ sales_categories | tojson
+  }};
+  const isSale = (d.offer_type === 'sales') || (d.category && salesCategories.includes(d.category));
+
+  const rSelect = document.getElementById("wRadius");
+  const li = rSelect.closest("li");
+
+  if (li) {
+    if (isSale) {
+      li.style.setProperty("display", "none", "important");
+    } else {
+      li.style.display = 'flex';
+    }
+  }
+  }) ();
+</script>
+{% endblock %}

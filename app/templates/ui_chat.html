@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card-soft p-4">
+  <div class="d-flex align-items-center justify-content-between">
+    <div>
+      <h2 class="fw-bold mb-1">Chat</h2>
+      <div class="muted">Hablando con perfil #{{ other_profile_id }}</div>
+    </div>
+    <a class="btn btn-outline-dark rounded-2xl" href="javascript:history.back()">← Volver</a>
+  </div>
+</div>
+
+<div class="card-soft p-3 mt-3" style="height:420px; overflow:auto;" id="messages"></div>
+
+<div class="card-soft p-3 mt-3">
+  <div class="d-flex gap-2">
+    <input id="text" class="form-control" placeholder="Escribe un mensaje…">
+    <button class="btn btn-green rounded-2xl px-4" onclick="sendMsg()">Enviar</button>
+  </div>
+  <div class="muted small mt-2" id="status"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const other = {{ other_profile_id }};
+const me = localStorage.getItem("me_profile_id");
+
+const statusEl = document.getElementById("status");
+const msgBox = document.getElementById("messages");
+const input = document.getElementById("text");
+
+function addBubble(text, side="left"){
+  const div = document.createElement("div");
+  div.className = "p-2 mb-2";
+  div.style.maxWidth = "75%";
+  div.style.borderRadius = "14px";
+  div.style.border = "1px solid #e5e7eb";
+  div.style.background = "#fff";
+  div.style.marginLeft = side==="right" ? "auto" : "0";
+  div.textContent = text;
+  msgBox.appendChild(div);
+  msgBox.scrollTop = msgBox.scrollHeight;
+}
+
+if (!me){
+  statusEl.textContent = "Selecciona 'Mi perfil' arriba para chatear.";
+  window.sendMsg = function(){};
+} else {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  const wsUrl = `${proto}://${location.host}/api/v1/ws/chat?me=${me}&other=${other}`;
+  const ws = new WebSocket(wsUrl);
+
+  ws.onopen = () => statusEl.textContent = "Conectado ✅";
+  ws.onclose = () => statusEl.textContent = "Desconectado ❌";
+  ws.onerror = () => statusEl.textContent = "Error de conexión ❌";
+
+  ws.onmessage = (ev) => {
+    const data = JSON.parse(ev.data);
+    if (data.type === "system") return;
+    const side = String(data.from) === String(me) ? "right" : "left";
+    addBubble(data.text, side);
+  };
+
+  window.sendMsg = function(){
+    const t = input.value.trim();
+    if (!t) return;
+    ws.send(JSON.stringify({text: t}));
+    input.value = "";
+    input.focus();
+  }
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMsg();
+  });
+}
+</script>
+{% endblock %}

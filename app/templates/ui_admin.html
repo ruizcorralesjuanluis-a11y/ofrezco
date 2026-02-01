@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card-soft p-4">
+  <h2 class="fw-bold mb-1">Panel Admin</h2>
+  <div class="muted mb-4">Revisión y control de ofertas</div>
+
+  <h5 class="fw-bold mb-2">Pendientes</h5>
+  <div id="pendingBox"></div>
+
+  <hr class="my-4">
+
+  <h5 class="fw-bold mb-2">Todas las ofertas</h5>
+  <div id="allBox"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function statusBadge(s){
+  const m = {
+    PENDING: "warning",
+    PUBLISHED: "success",
+    REJECTED: "danger",
+    DRAFT: "secondary"
+  };
+  return `<span class="badge text-bg-${m[s] || 'light'}">${s}</span>`;
+}
+
+function availBadge(v){
+  return v
+    ? `<span class="badge text-bg-success">Disponible</span>`
+    : `<span class="badge text-bg-secondary">No disponible</span>`;
+}
+
+function offerCard(o, admin=false){
+  return `
+    <div class="card-soft p-3 mb-3">
+      <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+        <div>
+          <div class="fw-bold">${o.title}</div>
+          <div class="muted small">${o.category} · ${o.offer_kind}</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          ${statusBadge(o.status)}
+          ${availBadge(o.available_now)}
+          <span class="badge text-bg-light border">#${o.id}</span>
+        </div>
+      </div>
+
+      ${admin ? `
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-sm btn-outline-dark"
+                onclick="toggleAvailability(${o.id})">
+          ${o.available_now ? "⏸️ Desactivar" : "▶️ Activar"}
+        </button>
+        <button class="btn btn-sm btn-success"
+                onclick="setStatus(${o.id}, 'PUBLISHED')">
+          Publicar
+        </button>
+        <button class="btn btn-sm btn-danger"
+                onclick="setStatus(${o.id}, 'REJECTED')">
+          Rechazar
+        </button>
+      </div>` : ""}
+    </div>
+  `;
+}
+
+async function toggleAvailability(id){
+  const res = await fetch(`/api/v1/offers/${id}/availability`, {
+    method: "PATCH"
+  });
+
+  if (!res.ok){
+    alert("No se pudo cambiar la disponibilidad");
+    return;
+  }
+  loadAdmin();
+}
+
+async function setStatus(id, status){
+  const res = await fetch(`/api/v1/offers/${id}/status`, {
+    method: "PATCH",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ status })
+  });
+
+  if (!res.ok){
+    alert("No se pudo cambiar el estado");
+    return;
+  }
+  loadAdmin();
+}
+
+async function loadAdmin(){
+  const pRes = await fetch("/api/v1/offers/pending");
+  const pending = pRes.ok ? await pRes.json() : [];
+  document.getElementById("pendingBox").innerHTML =
+    pending.length
+      ? pending.map(o => offerCard(o, true)).join("")
+      : `<div class="muted">No hay pendientes</div>`;
+
+  const pubRes = await fetch("/api/v1/offers");
+  const published = pubRes.ok ? await pubRes.json() : [];
+
+  const all = [...pending, ...published];
+  const map = new Map();
+  all.forEach(o => map.set(o.id, o));
+
+  document.getElementById("allBox").innerHTML =
+    Array.from(map.values())
+      .sort((a,b) => b.id - a.id)
+      .map(o => offerCard(o, true))
+      .join("");
+}
+
+loadAdmin();
+</script>
+{% endblock %}

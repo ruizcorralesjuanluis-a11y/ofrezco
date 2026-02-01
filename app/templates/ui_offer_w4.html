@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="ios-screen">
+  <div class="ios-section d-flex align-items-center gap-2">
+    <a class="btn btn-link p-0" href="/ui/offers/new/3" style="text-decoration:none;font-size:20px;">←</a>
+    <div class="fw-black" style="font-weight:900;font-size:22px;letter-spacing:-.4px;">Verificación</div>
+    <div class="ms-auto muted" style="font-size:13px;">4/4</div>
+  </div>
+</div>
+
+<!-- Formulario estilo iOS -->
+<div class="card-soft overflow-hidden p-0 mt-3">
+  <div class="px-3 py-2 bg-light border-bottom small fw-bold text-uppercase muted"
+    style="letter-spacing:1px; font-size:11px;">
+    PASO 4 · VÍDEO Y REVISIÓN
+  </div>
+
+  <div class="p-4 text-center border-bottom bg-white">
+    <p class="muted small mb-3">Graba un vídeo corto (max 30s) presentándote. Aumenta mucho tus posibilidades.</p>
+
+    <label class="btn btn-outline-primary pill d-inline-flex align-items-center gap-2">
+      📹 Grabar / Subir Vídeo
+      <input id="wVideo" type="file" accept="video/*" capture="environment" style="display:none"
+        onchange="document.getElementById('videoLabel').textContent = this.files[0]?.name || 'Vídeo seleccionado';" />
+    </label>
+    <div id="videoLabel" class="small mt-2 text-primary fw-bold"></div>
+  </div>
+
+  <div class="p-3 bg-light">
+    <div class="small fw-bold text-uppercase muted mb-2">RESUMEN DE LA OFERTA</div>
+    <div id="summary" class="small text-dark" style="line-height:1.6;"></div>
+  </div>
+
+  <div class="p-3 border-top bg-white">
+    <button class="btn btn-link text-danger w-100 text-decoration-none small" onclick="clearDraft()">🗑 Eliminar
+      borrador y empezar de cero</button>
+  </div>
+</div>
+
+<div class="d-flex gap-2 mt-3">
+  <a class="btn btn-light flex-grow-1 pill" href="/ui/offers/new/3">Atrás</a>
+  <button class="btn btn-success flex-grow-1 pill" onclick="publish()">Publicar oferta</button>
+</div>
+
+<script>
+  function wDraftKey() {
+    const pid = localStorage.getItem("me_profile_id") || "";
+    return "draft_offer_" + (pid || "anon");
+  }
+  function loadDraft() { try { return JSON.parse(localStorage.getItem(wDraftKey()) || "{}"); } catch (e) { return {}; } }
+  function saveDraft(patch) {
+    const d = loadDraft();
+    const n = Object.assign({}, d, patch);
+    localStorage.setItem(wDraftKey(), JSON.stringify(n));
+    return n;
+  }
+  function clearDraft() {
+    localStorage.removeItem(wDraftKey());
+    renderSummary();
+    alert("Borrador eliminado.");
+  }
+  function renderSummary() {
+    const d = loadDraft();
+    const s = document.getElementById("summary");
+    const lines = [];
+    if (d.category) lines.push(`<b>Categoría:</b> ${d.category}`);
+    if (d.title) lines.push(`<b>Título:</b> ${d.title}`);
+    if (d.specialty) lines.push(`<b>Especialidad:</b> ${d.specialty}`);
+    if (d.zone_text) lines.push(`<b>Zona:</b> ${d.zone_text}`);
+    if (d.service_radius_km) lines.push(`<b>Radio:</b> ${d.service_radius_km} km`);
+    lines.push(`<b>Disponible ahora:</b> ${d.available_now ? "Sí" : "No"}`);
+    if (d.price != null) lines.push(`<b>Precio:</b> ${d.price} €`);
+    s.innerHTML = lines.join("<br>");
+  }
+  async function publish() {
+    const profileId = localStorage.getItem("me_profile_id");
+    if (!profileId) { alert("Selecciona o crea un Perfil en “Cuenta” primero."); return; }
+
+    const d = loadDraft();
+    if (!d.category || !d.title) { alert("Faltan datos del paso 1."); return; }
+
+    // VALIDACIÓN ESPECIAL: Si es Venta, el video es OBLIGATORIO
+    const isVenta = (d.category || "").includes("Venta") || (d.category || "").includes("Mercado");
+    const videoFile = document.getElementById("wVideo").files[0];
+
+    if (isVenta && !videoFile) {
+      alert("⚠️ OBLIGATORIO: Para vender productos, debes subir un vídeo demostrativo.");
+      return;
+    }
+
+    // 1) Crear oferta DRAFT
+    const payload = {
+      profile_id: Number(profileId),
+      offer_kind: "SERVICE",
+      category: d.category,
+      title: d.title,
+      description: (d.description || "").trim() || null,
+      price: (d.price == null ? null : Number(d.price)),
+      currency: "EUR",
+      available_now: !!d.available_now,
+      allergens: d.specialty ? String(d.specialty) : null
+    };
+
+    let offer;
+    try {
+      const r = await fetch("/api/v1/offers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
+      offer = j;
+    } catch (e) {
+      alert("Error creando oferta: " + e.message);
+      return;
+    }
+
+    // 2) Subir vídeo si existe
+    const f = document.getElementById("wVideo").files[0];
+    if (f) {
+      try {
+        const fd = new FormData();
+        fd.append("file", f);
+        const r2 = await fetch(`/api/v1/offers/${offer.id}/video`, { method: "POST", body: fd });
+        const j2 = await r2.json();
+        if (!r2.ok) throw new Error(j2.detail || ("HTTP " + r2.status));
+        offer = j2;
+      } catch (e) {
+        alert("Oferta creada, pero el vídeo falló: " + e.message);
+        return;
+      }
+    }
+
+    // 3) Enviar a revisión (requiere vídeo según backend)
+    try {
+      const r3 = await fetch(`/api/v1/offers/${offer.id}/submit`, { method: "POST" });
+      const j3 = await r3.json();
+      if (!r3.ok) throw new Error(j3.detail || ("HTTP " + r3.status));
+      // OK
+      localStorage.removeItem(wDraftKey());
+      alert("¡Oferta publicada con éxito!");
+      location.href = "/ui/offers"; // Ir al listado general para verla
+    } catch (e) {
+      alert("Oferta creada, pero no se pudo enviar a revisión: " + e.message);
+    }
+  }
+
+  (function init() {
+    // label perfil activo (base.html ya lo rellena, pero por si acaso)
+    const pid = localStorage.getItem("me_profile_id");
+    const el = document.getElementById("activeProfileLabel");
+    if (pid) el.textContent = "#" + pid;
+    renderSummary();
+  })();
+</script>
+{% endblock %}

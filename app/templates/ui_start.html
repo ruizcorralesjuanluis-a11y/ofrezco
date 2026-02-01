@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card-soft p-4">
+  <div class="badge badge-soft mb-2">Local · Urgente · Comunidad + Profesionales</div>
+  <h2 class="fw-bold mb-1" style="letter-spacing:-0.5px;">Inicio</h2>
+  <p class="muted mb-0">Elige una acción.</p>
+</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-md-6">
+    <a class="big-action green d-block text-decoration-none" href="/ui/need/new">
+      <h3>🔎 Necesito ayuda</h3>
+      <p>Busca ayuda ahora</p>
+    </a>
+  </div>
+
+  <div class="col-md-6">
+    <a class="big-action orange d-block text-decoration-none" href="/ui/offers/new">
+      <h3>🤝 Ofrezco mis servicios</h3>
+      <p>Publica lo que puedes hacer</p>
+    </a>
+  </div>
+</div>
+{% endblock %}

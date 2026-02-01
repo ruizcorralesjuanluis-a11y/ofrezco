@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+gunicorn
+sqlalchemy
+pydantic
+python-dotenv
+psycopg2-binary
+python-multipart
+email-validator
+jinja2
+authlib
+httpx
+itsdangerous

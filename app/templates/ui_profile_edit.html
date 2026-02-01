@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .edit-header {
+        text-align: center;
+        padding: 30px 20px;
+        background: #fff;
+    }
+
+    .avatar-preview {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #f3f4f6;
+        margin-bottom: 15px;
+    }
+
+    .camera-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #e5e7eb;
+        color: #1f2937;
+        padding: 8px 16px;
+        border-radius: 30px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+</style>
+
+<div class="edit-header">
+    <img id="preview" src="{{ p.photo or 'https://via.placeholder.com/100' }}" class="avatar-preview">
+    <br>
+    <!-- Input oculto -->
+    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="uploadPhoto()">
+
+    <label for="fileInput" class="camera-btn">
+        📸 Cambiar Foto
+    </label>
+</div>
+
+<div class="p-4">
+    <label class="form-label fw-bold">Sobre mí (Descripción)</label>
+    <textarea id="descInput" class="form-control mb-3" rows="5"
+        placeholder="Cuéntanos qué sabes hacer, tu experiencia...">{{ p.description or '' }}</textarea>
+
+    <label class="form-label fw-bold">Teléfono Móvil (WhatsApp)</label>
+    <input type="tel" id="phoneInput" class="form-control" placeholder="+34 600 000 000" value="{{ p.phone or '' }}">
+    <div class="form-text">Necesario para que te contacten por WhatsApp.</div>
+
+    <label class="form-label fw-bold mt-3">Video de Presentación</label>
+    <div class="mb-2">
+        {% if p.video_url %}
+        <video src="{{ p.video_url }}" controls style="max-width: 100%; height: 200px; border-radius: 10px;"></video>
+        <div class="small text-muted mt-1">Video actual</div>
+        {% endif %}
+    </div>
+
+    <label class="btn btn-outline-primary pill w-100">
+        🎥 Subir Video Nuevo
+        <input type="file" id="videoFileInput" accept="video/*" style="display:none" onchange="uploadVideoFile()">
+    </label>
+    <input type="hidden" id="videoInput" value="{{ p.video_url or '' }}">
+    <!-- <div class="form-text">Sube un video corto (MP4) presentándote.</div> -->
+
+    <label class="form-label fw-bold mt-3">Ubicación</label>
+    <div class="input-group mb-2">
+        <input type="text" id="addressInput" class="form-control" placeholder="Dirección o Ciudad"
+            value="{{ p.address or '' }}">
+        <button class="btn btn-outline-secondary" type="button" onclick="getLocation()">📍 Detectar</button>
+    </div>
+    <input type="hidden" id="latInput" value="{{ p.lat or '' }}">
+    <input type="hidden" id="lonInput" value="{{ p.lon or '' }}">
+
+    <button class="btn btn-dark w-100 pill py-3 fw-bold mt-4" onclick="saveProfile()">
+        Guardar cambios
+    </button>
+
+    <a href="/ui/profile/{{ p.id }}" class="btn btn-outline-secondary w-100 pill py-3 mt-3">
+        Cancelar
+    </a>
+</div>
+
+<script>
+    const profileId = {{ p.id }};
+
+    function getLocation() {
+        if (!navigator.geolocation) {
+            alert("Geolocation no soportada");
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            document.getElementById('latInput').value = lat;
+            document.getElementById('lonInput').value = lon;
+
+            // Reverse Geocoding
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                const data = await res.json();
+                document.getElementById('addressInput').value = data.display_name.split(",")[0] + ", " + (data.address.city || data.address.town || "");
+            } catch (e) {
+                console.error(e);
+            }
+        }, (err) => {
+            alert("Error: " + err.message);
+        });
+    }
+
+    async function uploadPhoto() {
+        const file = document.getElementById('fileInput').files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        // Feedback visual
+        document.getElementById('preview').style.opacity = 0.5;
+
+        try {
+            const res = await fetch(`/api/v1/profiles/${profileId}/photo`, {
+                method: "POST",
+                body: formData
+            });
+            if (!res.ok) throw new Error("Error upload");
+            const data = await res.json();
+
+            // Actualizar imagen
+            document.getElementById('preview').src = data.photo_url + "?t=" + new Date().getTime(); // force refresh
+            alert("¡Foto actualizada!");
+        } catch (e) {
+            alert("Error al subir foto: " + e);
+        } finally {
+            document.getElementById('preview').style.opacity = 1;
+        }
+    }
+
+    async function saveProfile() {
+        const desc = document.getElementById('descInput').value;
+        const phone = document.getElementById('phoneInput').value;
+        const video = document.getElementById('videoInput').value;
+        const lat = document.getElementById('latInput').value;
+        const lon = document.getElementById('lonInput').value;
+        const address = document.getElementById('addressInput').value;
+
+        try {
+            // Guardar Descripción
+            const r1 = await fetch(`/api/v1/profiles/${profileId}/description`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ description: desc })
+            });
+
+            // Guardar Teléfono
+            const r2 = await fetch(`/api/v1/profiles/${profileId}/phone`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone: phone })
+            });
+
+            // Guardar Video
+            const rVideo = await fetch(`/api/v1/profiles/${profileId}/video`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ video_url: video })
+            });
+
+            // Guardar Ubicación
+            const r3 = await fetch(`/api/v1/profiles/${profileId}/location`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ lat: lat, lon: lon, address: address })
+            });
+
+            if (r1.ok && r2.ok && r3.ok && rVideo.ok) {
+                alert("Cambios guardados correctamente");
+                location.href = `/ui/profile/${profileId}`;
+            } else {
+                alert("Hubo un error al guardar alguno de los datos.");
+            }
+        } catch (e) {
+            alert("Error: " + e);
+        }
+    }
+</script>
+
+{% endblock %}

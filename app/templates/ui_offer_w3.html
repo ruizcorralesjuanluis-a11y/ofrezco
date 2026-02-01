@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="ios-screen">
+  <div class="ios-section d-flex align-items-center gap-2">
+    <a class="btn btn-link p-0" href="/ui/offers/new/2" style="text-decoration:none;font-size:20px;">←</a>
+    <div class="fw-black" style="font-weight:900;font-size:22px;letter-spacing:-.4px;">Disponibilidad</div>
+    <div class="ms-auto muted" style="font-size:13px;">3/4</div>
+  </div>
+</div>
+
+<!-- Formulario estilo iOS -->
+<div class="card-soft overflow-hidden p-0 mt-3">
+  <div class="px-3 py-2 bg-light border-bottom small fw-bold text-uppercase muted"
+    style="letter-spacing:1px; font-size:11px;">
+    PASO 3 · DETALLES
+  </div>
+
+  <ul class="ios-list m-0 p-0" style="list-style:none;">
+    <!-- Switch Disponible Ahora -->
+    <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+      <span class="ios-label">Disponible ahora</span>
+      <div class="form-check form-switch m-0" style="min-height:auto;">
+        <input class="form-check-input" type="checkbox" id="wNow" style="width:40px;height:24px;">
+      </div>
+    </li>
+
+    <!-- Horario -->
+    <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+      <span class="ios-label" for="wSchedule">Horario</span>
+      <input id="wSchedule" class="ios-input text-end" style="width:60%;" placeholder="Ej. L-V 09:00 - 20:00" />
+    </li>
+
+    <!-- Precio -->
+    <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+      <span class="ios-label" for="wPrice">Precio aprox. (€)</span>
+      <input id="wPrice" type="number" step="0.01" class="ios-input text-end" style="width:100px;" placeholder="-" />
+    </li>
+  </ul>
+
+  <!-- Descripción fuera de la lista para que tenga espacio -->
+  <div class="p-3">
+    <label class="ios-label mb-2 d-block">Descripción detallada</label>
+    <textarea id="wDesc" class="form-control" rows="5"
+      style="border:1px solid #eee; border-radius:12px; resize:none; font-size:15px;"
+      placeholder="Explica tus servicios..."></textarea>
+  </div>
+</div>
+
+<div class="d-flex gap-2 mt-3">
+  <a class="btn btn-light flex-grow-1 pill" href="/ui/offers/new/2">Atrás</a>
+  <button class="btn btn-success flex-grow-1 pill" onclick="wNext()">Siguiente</button>
+</div>
+
+<script>
+  function wDraftKey() {
+    const pid = localStorage.getItem("me_profile_id") || "";
+    return "draft_offer_" + (pid || "anon");
+  }
+  function loadDraft() { try { return JSON.parse(localStorage.getItem(wDraftKey()) || "{}"); } catch (e) { return {}; } }
+  function saveDraft(patch) {
+    const d = loadDraft();
+    const n = Object.assign({}, d, patch);
+    localStorage.setItem(wDraftKey(), JSON.stringify(n));
+    return n;
+  }
+  function wNext() {
+    const available_now = document.getElementById("wNow").checked;
+    const schedule_text = document.getElementById("wSchedule").value.trim();
+    const priceRaw = document.getElementById("wPrice").value;
+    const price = priceRaw ? Number(priceRaw) : null;
+    const description = document.getElementById("wDesc").value.trim();
+    saveDraft({ available_now, schedule_text, price, description });
+    location.href = "/ui/offers/new/4";
+  }
+  (function init() {
+    const d = loadDraft();
+    document.getElementById("wNow").checked = !!d.available_now;
+    if (d.schedule_text) document.getElementById("wSchedule").value = d.schedule_text;
+    if (d.price != null) document.getElementById("wPrice").value = String(d.price);
+    if (d.description) document.getElementById("wDesc").value = d.description;
+
+    // Adaptar textos si es Venta
+    const salesCategories = {{ sales_categories | tojson
+  }};
+  // Prioridad: 1. offer_type guardado, 2. check de categoría
+  const isVenta = (d.offer_type === 'sales') || (d.category && salesCategories.includes(d.category)) || ((d.category_group || "").toLowerCase().includes("mercadillo"));
+
+  console.log("DEBUG Step 3: isVenta?", isVenta, "Draft:", d);
+
+  if (isVenta) {
+    // En venta no suele haber "Horario" ni "Tarifa x hora" sino "Precio"
+    // Selector robusto for label
+    document.querySelector(".ios-label[for='wPrice']").textContent = "Precio";
+
+    // Ocultar "Disponible ahora"
+    const wNowLi = document.getElementById("wNow").closest("li");
+    if (wNowLi) wNowLi.style.display = "none";
+
+    // Ocultar "Horario"
+    const wScheduleLi = document.getElementById("wSchedule").closest("li");
+
+    if (wScheduleLi) {
+      // Ocultar Horario si es puro producto. 
+      wScheduleLi.style.setProperty("display", "none", "important");
+    }
+
+    // Adaptar placeholder descripción
+    const descArea = document.getElementById("wDesc");
+    const descLabel = descArea.previousElementSibling;
+    if (descLabel) descLabel.textContent = "Descripción del producto";
+    descArea.placeholder = "Describe el estado, marca, tamaño, defectos, etc.";
+  }
+  }) ();
+</script>
+{% endblock %}

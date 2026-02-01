@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="home-hero text-center py-5"
+  style="background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%); border-radius: 0 0 40px 40px; margin: -1.5rem -0.75rem 2rem; padding-bottom: 4rem !important;">
+  <div class="mb-4">
+    <img src="/static/img/logo.png" alt="Ofrezco Logo"
+      style="width:120px; height:120px; border-radius:30px; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
+  </div>
+  <h1 class="fw-black mb-3" style="font-size: 2.5rem; letter-spacing: -1px; line-height: 1.1;">
+    Tu ayuda experta,<br>cerca de ti.
+  </h1>
+  <p class="text-muted lead mb-5 mx-auto" style="max-width: 320px;">
+    La app para encontrar profesionales de confianza o ganar dinero con tus habilidades.
+  </p>
+
+  <div class="d-grid gap-3" style="max-width: 340px; margin: 0 auto;">
+    <a href="/ui/need/new?mode=service"
+      class="btn btn-green pill py-3 fs-5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
+      🔎 Necesito Ayuda
+    </a>
+    <a href="/ui/offers/new?type=service"
+      class="btn btn-white pill py-3 fs-5 fw-bold border shadow-sm d-flex align-items-center justify-content-center gap-2 text-dark">
+      🤝 Ofrecer Servicio
+    </a>
+    <a href="/ui/results?cat=Mercado+de+Segunda+Mano+(Venta)&mode=sales"
+      class="btn btn-warning pill py-3 fs-5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 text-dark">
+      🛍️ Ir al Mercadillo
+    </a>
+    <a href="/ui/offers/new?type=sales"
+      class="btn btn-white pill py-3 fs-5 fw-bold border shadow-sm d-flex align-items-center justify-content-center gap-2 text-dark">
+      🏪 Vender algo
+    </a>
+  </div>
+
+  <div class="mt-5 pt-3 text-center">
+    <div class="small text-muted mb-2">Categorías populares</div>
+    <div class="d-flex justify-content-center gap-2 flex-wrap px-3">
+      <span class="badge bg-light text-dark border">⚡ Electricidad</span>
+      <span class="badge bg-light text-dark border">🚿 Fontanería</span>
+      <span class="badge bg-light text-dark border">🛍️ Mercadillo</span>
+      <span class="badge bg-light text-dark border">🧹 Limpieza</span>
+      <span class="badge bg-light text-dark border">📦 Mudanzas</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Detectar si venimos de un redireccionamiento de login
+  document.addEventListener('DOMContentLoaded', function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('login_required')) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-warning alert-dismissible fade show shadow-sm border-0 mb-4 mx-auto';
+      alertDiv.style.borderRadius = '15px';
+      alertDiv.style.maxWidth = '400px';
+      alertDiv.innerHTML = `
+        <div class="d-flex align-items-center gap-3">
+          <span style="font-size:1.5rem">🔐</span>
+          <div class="text-start">
+            <h6 class="alert-heading fw-bold mb-1">¡Inicia sesión primero!</h6>
+            <p class="mb-0 small text-muted">Debes acceder con tu cuenta para poder ofrecer servicios o vender artículos.</p>
+          </div>
+        </div>
+        <div class="d-grid mt-3">
+          <a href="/login" class="btn btn-dark pill btn-sm">Acceder ahora</a>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      const hero = document.querySelector('.home-hero');
+      if (hero) hero.prepend(alertDiv);
+    }
+  });
+</script>
+{% endblock %}
