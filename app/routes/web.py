@@ -15,13 +15,24 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 # Force Reload Trigger
 
-def get_user_context(request: Request):
+def get_user_context(request: Request, db: Session = None):
+    user_id = request.session.get("user_id")
+    profile_id = request.session.get("profile_id")
+    
+    # Si tenemos una sesión de DB y un profile_id, verificamos que EXISTA
+    if db and profile_id:
+        p_exists = db.execute(select(Profile.id).where(Profile.id == profile_id)).scalar()
+        if not p_exists:
+            print(f"DEBUG: Perfil {profile_id} no encontrado en DB. Limpiando sesión.")
+            request.session.pop("profile_id", None)
+            profile_id = None
+
     return {
-        "id": request.session.get("user_id"),
+        "id": user_id,
         "name": request.session.get("user_name"),
         "email": request.session.get("user_email"),
         "picture": request.session.get("user_picture"),
-        "profile_id": request.session.get("profile_id"),
+        "profile_id": profile_id,
     }
 
 
@@ -32,14 +43,14 @@ def get_user_context(request: Request):
 # -------------------------
 @router.get("/", response_class=HTMLResponse)
 @router.get("/ui", response_class=HTMLResponse)
-def home(request: Request):
+def home(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(
         "home.html",
         {
             "request": request,
             "title": "Ofrezco",
             "page_title": "Inicio",
-            "user": get_user_context(request),
+            "user": get_user_context(request, db),
             "categories": CATEGORIES,
         },
     )
@@ -49,7 +60,7 @@ def home(request: Request):
 # PUBLICAR NECESIDAD
 # -------------------------
 @router.get("/ui/need/new", response_class=HTMLResponse)
-def ui_need_new(request: Request, mode: str = ""):
+def ui_need_new(request: Request, db: Session = Depends(get_db), mode: str = ""):
     return templates.TemplateResponse(
         "ui_need_new.html",
         {
@@ -57,7 +68,7 @@ def ui_need_new(request: Request, mode: str = ""):
             "title": "Ofrezco · Publicar necesidad",
             "page_title": "Publicar Necesidad",
             "back_url": "/ui",
-            "user": get_user_context(request),
+            "user": get_user_context(request, db),
             "categories": CATEGORIES,
             "mode": mode,
         },
@@ -71,14 +82,7 @@ def ui_need_new(request: Request, mode: str = ""):
 # RESULTADOS (búsqueda)
 # -------------------------
 @router.get("/ui/results", response_class=HTMLResponse)
-def ui_results(
-    request: Request,
-    q: str = "",
-    cat: str = "",
-    urg: str = "",
-    mode: str = "",
-    db: Session = Depends(get_db)  # Inyección de DB
-):
+def ui_results(request: Request, db: Session = Depends(get_db), cat: str = None, q: str = None, mode: str = "service"):
     from app.core.data import get_flattened_categories
     # Base query: Ofertas publicadas
     query = select(Offer).where(Offer.status == "PUBLISHED").order_by(Offer.id.desc())
@@ -106,7 +110,6 @@ def ui_results(
         )
 
     # Filtro por modo (Venta vs Servicio)
-    from app.core.data import get_sales_categories
     sales_cats = get_sales_categories()
     if mode == "sales":
         query = query.where(Offer.category.in_(sales_cats))
@@ -165,7 +168,9 @@ def ui_results(
         "ui_results.html",
         {
             "request": request,
-            "title": "Ofrezco · Resultados",
+            "title": "Resultados" if not cat else cat,
+            "user": get_user_context(request, db),
+            "categories": CATEGORIES,
             "page_title": "Resultados",
             "back_url": "/ui/need/new",
 
@@ -229,9 +234,9 @@ def ui_profile(request: Request, profile_id: int, offer_id: int = None, db: Sess
             "p": profile_data,
             "service_offers": service_offers,
             "sales_offers": sales_offers,
-            "user": get_user_context(request),
-            "is_me": "user_id" in request.session and request.session["user_id"] == prof.user_id 
-        },
+            "user": get_user_context(request, db),
+            "is_own": request.session.get("profile_id") == profile_id
+        }
     )
 
 @router.get("/ui/profile/{profile_id}/edit", response_class=HTMLResponse)
@@ -249,7 +254,8 @@ def ui_profile_edit(request: Request, profile_id: int, db: Session = Depends(get
             "request": request,
             "title": "Editar Perfil",
             "p": prof,
-            "back_url": f"/ui/profile/{profile_id}"
+            "back_url": f"/ui/profile/{profile_id}",
+            "user": get_user_context(request, db),
         }
     )
 
@@ -258,11 +264,13 @@ def ui_profile_edit(request: Request, profile_id: int, db: Session = Depends(get
 # PUBLICAR OFERTA
 # -------------------------
 @router.get("/ui/offers/new", response_class=HTMLResponse)
-def ui_offer_new(request: Request, type: str = ""):
+def ui_offer_new(request: Request, db: Session = Depends(get_db), type: str = ""):
     if "user_id" not in request.session:
         return RedirectResponse("/ui?login_required=true")
     
-    if "profile_id" not in request.session:
+    # Validar que el user tiene perfil ANTES de pasar al wizard
+    u_context = get_user_context(request, db)
+    if not u_context["profile_id"]:
         return RedirectResponse("/ui?profile_required=true")
     
     # Filtrar categorías según el tipo
@@ -277,7 +285,7 @@ def ui_offer_new(request: Request, type: str = ""):
         {
             "request": request,
             "title": "Ofrezco · Nueva oferta (1/4)",
-            "user": get_user_context(request),
+            "user": u_context,
             "categories": filtered_cats,
             "sales_categories": get_sales_categories(),
             "offer_type": type, # Para que el frontend sepa qué modo es
@@ -290,66 +298,80 @@ def ui_offer_new(request: Request, type: str = ""):
 # WIZARD NUEVA OFERTA (4 pasos)
 # -------------------------
 @router.get("/ui/offers/new/1", response_class=HTMLResponse)
-def ui_offer_w1(request: Request):
+def ui_offer_w1(request: Request, db: Session = Depends(get_db)):
     if "user_id" not in request.session: return RedirectResponse("/ui")
     return templates.TemplateResponse("ui_offer_w1.html", {
         "request": request, 
         "title": "Nueva oferta (1/4)", 
         "page_title": "Paso 1: Info Básica",
         "back_url": "/ui/offers/new",
-        "user": get_user_context(request),
+        "user": get_user_context(request, db),
         "categories": CATEGORIES,
         "sales_categories": get_sales_categories(),
     })
 
 
 @router.get("/ui/offers/new/2", response_class=HTMLResponse)
-def ui_offer_w2(request: Request):
+def ui_offer_w2(request: Request, db: Session = Depends(get_db)):
     if "user_id" not in request.session: return RedirectResponse("/ui")
     return templates.TemplateResponse("ui_offer_w2.html", {
         "request": request, 
         "title": "Nueva oferta (2/4)", 
         "page_title": "Paso 2: Ubicación",
         "back_url": "/ui/offers/new/1",
-        "user": get_user_context(request),
-        "sales_categories": get_sales_categories(),
+        "user": get_user_context(request, db),
     })
 
 
 @router.get("/ui/offers/new/3", response_class=HTMLResponse)
-def ui_offer_w3(request: Request):
+def ui_offer_w3(request: Request, db: Session = Depends(get_db)):
     if "user_id" not in request.session: return RedirectResponse("/ui")
     return templates.TemplateResponse("ui_offer_w3.html", {
         "request": request, 
         "title": "Nueva oferta (3/4)", 
-        "page_title": "Paso 3: Detalles",
+        "page_title": "Paso 3: Precio",
         "back_url": "/ui/offers/new/2",
-        "user": get_user_context(request),
-        "sales_categories": get_sales_categories(),
+        "user": get_user_context(request, db),
     })
 
 
 @router.get("/ui/offers/new/4", response_class=HTMLResponse)
-def ui_offer_w4(request: Request):
+def ui_offer_w4(request: Request, db: Session = Depends(get_db)):
     if "user_id" not in request.session: return RedirectResponse("/ui")
     return templates.TemplateResponse("ui_offer_w4.html", {
         "request": request, 
         "title": "Nueva oferta (4/4)", 
-        "page_title": "Paso 4: Vídeo",
+        "page_title": "Paso 4: Finalizar",
         "back_url": "/ui/offers/new/3",
-        "user": get_user_context(request)
+        "user": get_user_context(request, db)
     })
 
 # -------------------------
 # LISTADO DE OFERTAS
 # -------------------------
 @router.get("/ui/offers", response_class=HTMLResponse)
-def ui_offers(request: Request):
+def ui_offers(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(
         "ui_offers.html",
         {
             "request": request,
             "title": "Ofrezco · Ofertas",
+            "user": get_user_context(request, db),
+        },
+    )
+
+
+# -------------------------
+# LISTADO DE OFERTAS
+# -------------------------
+@router.get("/ui/needs", response_class=HTMLResponse)
+def ui_needs(request: Request, db: Session = Depends(get_db)):
+    return templates.TemplateResponse(
+        "ui_needs.html",
+        {
+            "request": request,
+            "title": "Necesidades",
+            "user": get_user_context(request, db),
         },
     )
 
@@ -358,11 +380,12 @@ def ui_offers(request: Request):
 # ADMIN
 # -------------------------
 @router.get("/ui/admin", response_class=HTMLResponse)
-def ui_admin(request: Request):
+def ui_admin(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(
         "ui_admin.html",
         {
             "request": request,
-            "title": "Ofrezco · Admin",
+            "title": "Admin",
+            "user": get_user_context(request, db),
         },
     )
