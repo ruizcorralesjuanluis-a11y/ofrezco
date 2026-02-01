@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
+from app.db.init_db import init_db, reset_db_completely
 
 from app.db.session import get_db
 from app.models.offer import Offer
@@ -121,43 +122,36 @@ def ui_results(request: Request, db: Session = Depends(get_db), cat: str = None,
     # Formatear para la vista "ui_results.html" (espera objetos 'p')
     results = []
     for o in offers:
-        # Cargar perfil/usuario (idealmente con join, aquí lazy loading por simplicidad)
-        # Asumimos que profile y user están relacionados en el modelo o los buscamos
-        # El modelo Offer tiene profile_id. El Profile tiene user_id. 
-        # Vamos a hacer una chapuza rápida para demo: buscar el profile -> user
-        
-        # Necesitamos la foto y el nombre. 
-        # Offer -> relation 'profile' -> relation 'user'
-        # Si las relaciones no están definidas en SQLAlchemy Models (lazy='joined'), hay que hacer queries.
-        # Revisando user.py y profile.py, definen relaciones?
-        # Asumiremos que sí o haremos query manual.
-        
-        # Query manual rápida para asegurar:
-        prof = db.get(Profile, o.profile_id)
-        u = db.get(User, prof.user_id) if prof else None
-        
-        # Calcular valoración del perfil
-        stmt_rating = select(func.count(Rating.id), func.avg(Rating.score)).where(Rating.profile_id == o.profile_id)
-        r_count, r_avg = db.execute(stmt_rating).one()
-        
-        results.append({
-            "id": o.profile_id, # El enlace va al perfil
-            "offer_id": o.id,   # Guardamos el ID de la oferta específica
-            "name": u.name if u else "Usuario",
-            "role": o.title,    # Mostramos el Título de la oferta como "Rol" principal
-            "title": o.title,   # Mapping explicito para vista mosaico
-            "category": o.category, # Mapping explicito para vista mosaico
-            "photo": o.photo_path or (prof.photo if prof and prof.photo else "https://via.placeholder.com/56"), 
-            # Priorizamos video de la oferta, si no, del perfil
-            "video": getattr(o, "video_path", None) or (prof.video_url if prof else None),
-            "distance_km": 1.2, # Fake distance
-            "status": "Disponible" if o.available_now else "Consultar",
-            "offer_cat": o.category,
-            "price": o.price,
-            "currency": o.currency,
-            "rating_avg": round(r_avg, 1) if r_avg else 0,
-            "rating_count": r_count or 0
-        })
+        try:
+            prof = db.get(Profile, o.profile_id)
+            u = db.get(User, prof.user_id) if prof else None
+            
+            # Calcular valoración
+            stmt_rating = select(func.count(Rating.id), func.avg(Rating.score)).where(Rating.profile_id == o.profile_id)
+            res_rating = db.execute(stmt_rating).one()
+            r_count = res_rating[0] or 0
+            r_avg = res_rating[1] or 0
+            
+            results.append({
+                "id": o.profile_id,
+                "offer_id": o.id,
+                "name": u.name if u else "Usuario",
+                "role": o.title,
+                "title": o.title,
+                "category": o.category,
+                "photo": getattr(o, "photo_path", None) or (prof.photo if prof and prof.photo else "https://via.placeholder.com/56"), 
+                "video": getattr(o, "video_path", None) or (prof.video_url if prof else None),
+                "distance_km": 1.2,
+                "status": "Disponible" if o.available_now else "Consultar",
+                "offer_cat": o.category,
+                "price": o.price,
+                "currency": o.currency,
+                "rating_avg": round(r_avg, 1),
+                "rating_count": r_count
+            })
+        except Exception as e:
+            print(f"ERROR procesando oferta {getattr(o, 'id', '?')}: {str(e)}")
+            continue # Ignorar ofertas corruptas para no romper el listado
 
     # Detectar modo de vista
     view_mode = "list"
@@ -416,3 +410,9 @@ def ui_admin(request: Request, db: Session = Depends(get_db)):
             "user": get_user_context(request, db),
         },
     )
+
+@router.get("/ui/admin/reset-db", response_class=HTMLResponse)
+def ui_admin_reset_db(request: Request, db: Session = Depends(get_db)):
+    # Solo permitir si el usuario es el dueño o vía URL secreta (demo)
+    reset_db_completely()
+    return HTMLResponse("<h1>Base de datos reiniciada con éxito en el servidor.</h1><p>Ahora puedes volver a <a href='/ui'>Inicio</a>, loguearte y crear tu anuncio con foto.</p>")

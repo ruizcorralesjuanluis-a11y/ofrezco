@@ -10,3 +10,7 @@ from app.models.rating import Rating  # noqa: F401
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+
+def reset_db_completely():
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)

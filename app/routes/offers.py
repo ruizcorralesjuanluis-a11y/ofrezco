@@ -14,27 +14,34 @@ router = APIRouter()
 
 @router.post("/offers", response_model=OfferOut, status_code=status.HTTP_201_CREATED)
 def create_offer(payload: OfferCreate, db: Session = Depends(get_db)):
+    print(f"DEBUG: Creando oferta con payload: {payload.dict()}")
     profile = db.execute(select(Profile).where(Profile.id == payload.profile_id)).scalar_one_or_none()
     if not profile:
         raise HTTPException(status_code=404, detail="Profile no encontrado.")
 
-    offer = Offer(
-        profile_id=payload.profile_id,
-        offer_kind=payload.offer_kind,
-        category=payload.category,
-        title=payload.title,
-        description=payload.description,
-        price=payload.price,
-        currency=payload.currency,
-        available_now=payload.available_now,
-        allergens=payload.allergens,
-        status="DRAFT",
-    )
+    try:
+        offer = Offer(
+            profile_id=payload.profile_id,
+            offer_kind=payload.offer_kind,
+            category=payload.category,
+            title=payload.title,
+            description=payload.description,
+            price=payload.price,
+            currency=payload.currency,
+            available_now=payload.available_now,
+            allergens=payload.allergens,
+            status="DRAFT",
+        )
 
-    db.add(offer)
-    db.commit()
-    db.refresh(offer)
-    return offer
+        db.add(offer)
+        db.commit()
+        db.refresh(offer)
+        print(f"DEBUG: Oferta creada con éxito: {offer.id}")
+        return offer
+    except Exception as e:
+        db.rollback()
+        print(f"ERROR creando oferta: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno al guardar: {str(e)}")
 
 
 @router.post("/offers/{offer_id}/submit", response_model=OfferOut)
