@@ -1,171 +1,277 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-    .offer-detail-hero {
-        position: relative;
-        width: 100%;
-        background: #000;
-        margin-top: -1.5rem;
-        /* Ajuste para subir el video al borde */
-        overflow: hidden;
+    /* HIDE GLOBAL NAV FOR IMMERSIVE FEEL */
+    .appbar,
+    .topbar,
+    .navbar {
+        display: none !important;
     }
 
-    .video-full {
+    .page-wrap {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+
+    body {
+        background: #000;
+    }
+
+    .immersive-container {
+        background: #000;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        color: #fff;
+    }
+
+    .video-container {
+        position: relative;
         width: 100%;
-        max-height: 80vh;
-        display: block;
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+    }
+
+    .video-immersive {
+        width: 100%;
+        max-height: 75vh;
         object-fit: contain;
     }
 
-    .detail-body {
+    /* Overlay Controls */
+    .overlay-top {
+        position: absolute;
+        top: env(safe-area-inset-top, 20px);
+        left: 20px;
+        right: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+    }
+
+    .btn-circle {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        text-decoration: none;
+        font-size: 20px;
+    }
+
+    /* Bottom Details Sheet */
+    .details-sheet {
         background: #fff;
-        border-radius: 30px 30px 0 0;
-        margin-top: -20px;
+        border-radius: 32px 32px 0 0;
+        padding: 30px 24px 100px;
+        color: #111;
         position: relative;
-        z-index: 2;
-        padding: 24px 20px;
-        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+        margin-top: -30px;
+        box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.4);
+        z-index: 10;
+    }
+
+    .sheet-handle {
+        width: 40px;
+        height: 5px;
+        background: #e2e8f0;
+        border-radius: 10px;
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
     }
 
     .detail-category {
-        text-transform: uppercase;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 800;
-        letter-spacing: 1px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
         color: #64748b;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
     }
 
     .detail-title {
-        font-size: 24px;
+        font-size: 28px;
         font-weight: 900;
-        letter-spacing: -0.5px;
-        line-height: 1.2;
-        margin-bottom: 12px;
+        letter-spacing: -1px;
+        line-height: 1.1;
+        margin-bottom: 8px;
     }
 
     .detail-price {
-        font-size: 28px;
-        font-weight: 900;
+        font-size: 32px;
+        font-weight: 950;
         color: #16a34a;
-        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
     }
 
-    .detail-section {
-        margin-top: 24px;
-        border-top: 1px solid #f1f5f9;
-        padding-top: 20px;
+    .detail-price span {
+        font-size: 16px;
+        font-weight: 700;
+        align-self: flex-start;
+        margin-top: 6px;
     }
 
-    .profile-card-mini {
+    .detail-description {
+        font-size: 16px;
+        line-height: 1.6;
+        color: #475569;
+        margin: 20px 0;
+        white-space: pre-wrap;
+    }
+
+    /* Seller Card */
+    .seller-card {
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 12px;
+        padding: 16px;
         background: #f8fafc;
-        border-radius: 16px;
+        border-radius: 20px;
         text-decoration: none;
         color: inherit;
         border: 1px solid #f1f5f9;
+        margin-top: 24px;
+        transition: transform 0.2s;
     }
 
-    .btn-wa {
-        background: #25D366;
+    .seller-card:active {
+        transform: scale(0.98);
+    }
+
+    .seller-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 18px;
+        object-fit: cover;
+    }
+
+    /* Fixed Action Bar */
+    .action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 16px 24px;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid #f1f5f9;
+        z-index: 1000;
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-premium-wa {
+        flex-grow: 1;
+        background: linear-gradient(135deg, #25D366 0%, #128c7e 100%);
         color: #fff;
+        font-weight: 800;
+        padding: 16px;
+        border-radius: 20px;
         border: none;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        font-weight: 800;
-        padding: 16px;
-        border-radius: 99px;
-        width: 100%;
+        gap: 12px;
         text-decoration: none;
-        margin-top: 20px;
-        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+        font-size: 16px;
+        box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
     }
 
-    .btn-wa:hover {
-        background: #128c7e;
-        color: #fff;
-    }
-
-    .back-btn-float {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        z-index: 10;
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(5px);
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
+    .btn-delete {
+        width: 56px;
+        height: 56px;
+        border-radius: 20px;
+        background: #fff;
+        border: 2px solid #fee2e2;
+        color: #ef4444;
         display: flex;
         align-items: center;
         justify-content: center;
-        text-decoration: none;
-        color: #000;
-        font-weight: bold;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        font-size: 20px;
+        flex-shrink: 0;
     }
 </style>
 
-<div class="offer-detail-hero">
-    <a href="javascript:history.back()" class="back-btn-float">←</a>
+<div class="immersive-container">
+    <div class="video-container">
+        <div class="overlay-top">
+            <a href="javascript:history.back()" class="btn-circle">←</a>
+            <div class="d-flex gap-2">
+                <button class="btn-circle" onclick="shareOffer()">🔗</button>
+            </div>
+        </div>
 
-    {% if o.video_path %}
-    <video class="video-full" controls autoplay muted playsinline loop>
-        <source src="{{ o.video_path }}">
-    </video>
-    {% else %}
-    <div class="d-flex align-items-center justify-content-center bg-secondary text-white" style="height:300px;">
-        (Sin vídeo)
+        {% if o.video_path %}
+        <video class="video-immersive" controls autoplay playsinline loop>
+            <source src="{{ o.video_path }}">
+        </video>
+        {% else %}
+        <div class="text-center p-5">
+            <div class="fs-1 mb-3">🎬</div>
+            <p class="muted">Sin vídeo disponible</p>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
-</div>
 
-<div class="detail-body">
-    <div class="detail-category">{{ o.category }}</div>
-    <h1 class="detail-title">{{ o.title }}</h1>
+    <div class="details-sheet">
+        <div class="sheet-handle"></div>
 
-    {% if o.price %}
-    <div class="detail-price">{{ o.price }}€</div>
-    {% endif %}
+        <div class="detail-category">{{ o.category }}</div>
+        <h1 class="detail-title">{{ o.title }}</h1>
 
-    <div class="detail-desc text-secondary" style="line-height: 1.6; white-space: pre-wrap;">{{ o.description or "Sin
-        descripción detallada." }}</div>
+        {% if o.price %}
+        <div class="detail-price">{{ o.price }}<span>€</span></div>
+        {% endif %}
 
-    <div class="detail-section">
-        <div class="small fw-bold text-muted text-uppercase mb-2">Vendedor</div>
-        <a href="/ui/profile/{{ p.id }}" class="profile-card-mini">
-            <img src="{{ p.photo or owner.picture or 'https://via.placeholder.com/50' }}" class="rounded-circle"
-                style="width:48px;height:48px;object-fit:cover;">
-            <div>
-                <div class="fw-bold">{{ p.user_name or owner.name }}</div>
+        <div class="detail-description">{{ o.description or "Sin descripción detallada por el momento." }}</div>
+
+        <a href="/ui/profile/{{ p.id }}" class="seller-card">
+            <img src="{{ p.photo or owner.picture or 'https://via.placeholder.com/100' }}" class="seller-avatar">
+            <div class="flex-grow-1">
+                <div class="fw-black" style="font-weight:900;">{{ p.user_name or owner.name }}</div>
                 <div class="small text-muted">{{ p.profile_type }}</div>
             </div>
-            <div class="ms-auto">→</div>
+            <div class="text-primary fw-bold small">Ver Perfil →</div>
         </a>
     </div>
+</div>
+
+<div class="action-bar">
+    {% if is_mine %}
+    <button class="btn-delete" onclick="deleteOffer({{ o.id }})">🗑</button>
+    {% endif %}
 
     {% if p.phone %}
     <a href="https://wa.me/{{ p.phone.replace('+', '').replace(' ', '') }}?text=Hola,%20me%20interesa%20tu%20anuncio:%20{{ o.title }}"
-        target="_blank" class="btn-wa">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-whatsapp"
-            viewBox="0 0 16 16">
+        target="_blank" class="btn-premium-wa">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path
-                d="M13.601 2.326A7.854 7.854 0 0 0 8 0C3.58 0 0 3.58 0 8c0 1.379.31 2.673.81 3.829l-1.077 3.57 3.733-.996A7.85 7.85 0 0 0 8 16c4.42 0 8-3.58 8-8s-3.58-8-8-8zM8 14.5a6.47 6.47 0 0 1-3.26-.88l-.234-.14-2.27.606.608-2.203-.153-.235A6.477 6.477 0 0 1 2.25 8c0-3.584 2.916-6.5 6.5-6.5s6.5 2.916 6.5 6.5-2.916 6.5-6.5 6.5z" />
+                d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.185-.573c.948.517 2.039.887 3.144.887 3.181 0 5.767-2.586 5.767-5.766 0-3.18-2.587-5.766-5.765-5.766zm3.375 8.203c-.145.409-.833.784-1.144.832-.284.043-.652.071-1.077-.066-.26-.083-.586-.192-.996-.37-1.748-.758-2.887-2.525-2.973-2.64-.087-.115-.712-.947-.712-1.804 0-.858.446-1.277.605-1.442.159-.164.346-.205.461-.205.115 0 .23 0 .331.005.105.004.246-.04.385.292.145.347.491 1.201.535 1.291.044.09.072.196.014.313-.058.115-.087.188-.173.288-.087.1-.183.223-.26.328-.087.1-.18.21-.077.387.103.177.457.753.98 1.217.673.597 1.239.782 1.413.869.174.087.275.072.376-.044.101-.115.433-.505.548-.678.115-.173.231-.145.39-.087s1.011.477 1.184.563c.174.087.289.13.332.202.045.072.043.419-.102.828z" />
+            <path
+                d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16z" />
         </svg>
-        Contactar por WhatsApp
+        Contactar ahora
     </a>
     {% else %}
-    <button class="btn btn-secondary w-100 pill py-3 mt-4" disabled>El vendedor no tiene WhatsApp</button>
-    {% endif %}
-
-    {% if is_mine %}
-    <button class="btn btn-outline-danger w-100 pill py-2 mt-3" onclick="deleteOffer({{ o.id }})">Borrar
-        anuncio</button>
+    <div class="btn btn-secondary flex-grow-1 pill d-flex align-items-center justify-content-center gap-2"
+        style="background:#f1f5f9; color:#94a3b8; border:none; opacity:1;">
+        Sin WhatsApp disponible
+    </div>
     {% endif %}
 </div>
 
@@ -179,6 +285,17 @@
             alert("Error al borrar");
         }
     }
-</script>
 
+    function shareOffer() {
+        if (navigator.share) {
+            navigator.share({
+                title: '{{ o.title }}',
+                text: 'Mira este anuncio en Ofrezco',
+                url: window.location.href,
+            }).catch(console.error);
+        } else {
+            alert("Enlace copiado: " + window.location.href);
+        }
+    }
+</script>
 {% endblock %}
