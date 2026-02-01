@@ -69,6 +69,26 @@
       `;
       const hero = document.querySelector('.home-hero');
       if (hero) hero.prepend(alertDiv);
+    } else if (urlParams.get('profile_required')) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-info alert-dismissible fade show shadow-sm border-0 mb-4 mx-auto';
+      alertDiv.style.borderRadius = '15px';
+      alertDiv.style.maxWidth = '400px';
+      alertDiv.innerHTML = `
+        <div class="d-flex align-items-center gap-3">
+          <span style="font-size:1.5rem">👤</span>
+          <div class="text-start">
+            <h6 class="alert-heading fw-bold mb-1">Crea tu Perfil Profesional</h6>
+            <p class="mb-0 small text-muted">Antes de publicar tu primera oferta, necesitamos crear tu perfil de trabajador.</p>
+          </div>
+        </div>
+        <div class="d-grid mt-3">
+          <button onclick="openCreateProfile()" class="btn btn-primary pill btn-sm">Crear Perfil ahora</button>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      const hero = document.querySelector('.home-hero');
+      if (hero) hero.prepend(alertDiv);
     }
   });
 </script>

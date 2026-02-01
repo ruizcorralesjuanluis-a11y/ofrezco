@@ -262,6 +262,9 @@ def ui_offer_new(request: Request, type: str = ""):
     if "user_id" not in request.session:
         return RedirectResponse("/ui?login_required=true")
     
+    if "profile_id" not in request.session:
+        return RedirectResponse("/ui?profile_required=true")
+    
     # Filtrar categorías según el tipo
     filtered_cats = CATEGORIES
     if type == "sales":

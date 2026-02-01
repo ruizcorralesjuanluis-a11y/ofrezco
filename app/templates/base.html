@@ -230,12 +230,11 @@
         navigator.serviceWorker.register('/static/sw.js').catch(() => { });
         // Sincronizar info de sesión con LocalStorage para que el JS frontend lo vea
         (function () {
-          const currentProfileId = "{{ user.profile_id if user and user.profile_id else '' }}";
-          if (currentProfileId) {
-            localStorage.setItem("me_profile_id", currentProfileId);
+          const profileId = "{{ user.profile_id if user and user.profile_id else '' }}";
+          if (profileId) {
+            localStorage.setItem("me_profile_id", profileId);
           } else {
-            // Si no hay perfil en sesión, lo borramos de local por si acaso (o lo dejamos si queremos persistencia extrema)
-            // localStorage.removeItem("me_profile_id"); 
+            localStorage.removeItem("me_profile_id");
           }
         })();
       });
