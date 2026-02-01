@@ -237,28 +237,6 @@ def ui_profile(request: Request, profile_id: int, offer_id: int = None, db: Sess
         }
     )
 
-@router.get("/ui/offers/{offer_id}", response_class=HTMLResponse)
-def ui_offer_detail(request: Request, offer_id: int, db: Session = Depends(get_db)):
-    offer = db.execute(select(Offer).where(Offer.id == offer_id)).scalar_one_or_none()
-    if not offer:
-        return RedirectResponse("/ui")
-    
-    # Datos del dueño
-    prof = offer.profile
-    user_owner = prof.user if prof else None
-
-    return templates.TemplateResponse(
-        "ui_offer_detail.html",
-        {
-            "request": request,
-            "title": offer.title,
-            "user": get_user_context(request, db),
-            "o": offer,
-            "p": prof,
-            "owner": user_owner,
-            "is_mine": request.session.get("profile_id") == prof.id if prof else False
-        }
-    )
 
 @router.get("/ui/profile/{profile_id}/edit", response_class=HTMLResponse)
 def ui_profile_edit(request: Request, profile_id: int, db: Session = Depends(get_db)):
@@ -368,6 +346,32 @@ def ui_offer_w4(request: Request, db: Session = Depends(get_db)):
         "back_url": "/ui/offers/new/3",
         "user": get_user_context(request, db)
     })
+
+# -------------------------
+# DETALLE DE OFERTA (IMMERSIVE) - Debe ir después de /new
+# -------------------------
+@router.get("/ui/offers/{offer_id}", response_class=HTMLResponse)
+def ui_offer_detail(request: Request, offer_id: int, db: Session = Depends(get_db)):
+    offer = db.execute(select(Offer).where(Offer.id == offer_id)).scalar_one_or_none()
+    if not offer:
+        return RedirectResponse("/ui")
+    
+    # Datos del dueño
+    prof = offer.profile
+    user_owner = prof.user if prof else None
+
+    return templates.TemplateResponse(
+        "ui_offer_detail.html",
+        {
+            "request": request,
+            "title": offer.title,
+            "user": get_user_context(request, db),
+            "o": offer,
+            "p": prof,
+            "owner": user_owner,
+            "is_mine": request.session.get("profile_id") == prof.id if prof else False
+        }
+    )
 
 # -------------------------
 # LISTADO DE OFERTAS
