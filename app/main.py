@@ -1,10 +1,11 @@
 import os
 
-# Permitir OAuth sin HTTPS en desarrollo
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+# Permitir OAuth sin HTTPS solo si estamos en local
+if os.getenv("RENDER") is None:
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 import traceback
 from fastapi.staticfiles import StaticFiles
 
@@ -17,34 +18,34 @@ from app.routes.users import router as users_router
 from app.routes.profiles import router as profiles_router
 from app.routes.offers import router as offers_router
 from app.routes.web import router as web_router
-from app.routes.web import router as web_router
 from app.routes.auth import router as auth_router
 from app.routes.ratings import router as ratings_router
 from app.routes.interests import router as interests_router
 
 app = FastAPI(title="Ofrezco", version="0.1.0")
 
-
-
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY, https_only=False, same_site="lax")
+# Configuración de sesión mejorada para Render (HTTPS)
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=settings.SECRET_KEY, 
+    https_only=False, # Cambiar a True si tienes problemas persistentes
+    same_site="lax"
+)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
 
 @app.on_event("startup")
 def on_startup():
     init_db()
 
-
+# Redirigir la raíz directamente a la UI visual
 @app.get("/")
 def root():
-    return {"app": "Ofrezco", "status": "running", "docs": "/docs", "api_prefix": "/api/v1"}
-
+    return RedirectResponse(url="/ui")
 
 @app.get("/api/v1/health", tags=["health"])
 def health():
     return {"ok": True}
-
 
 app.include_router(users_router, prefix="/api/v1", tags=["users"])
 app.include_router(profiles_router, prefix="/api/v1", tags=["profiles"])
@@ -54,4 +55,3 @@ app.include_router(ratings_router, prefix="/api/v1", tags=["ratings"])
 app.include_router(interests_router, prefix="/api/v1", tags=["interests"])
 
 app.include_router(web_router)
-app = app
