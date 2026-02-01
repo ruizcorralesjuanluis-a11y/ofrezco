@@ -54,3 +54,4 @@ app.include_router(ratings_router, prefix="/api/v1", tags=["ratings"])
 app.include_router(interests_router, prefix="/api/v1", tags=["interests"])
 
 app.include_router(web_router)
+app = app
