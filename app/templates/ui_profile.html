@@ -135,13 +135,15 @@
     {% endif %}
 
     <a href="/ui/offers/{{ o.id }}" class="text-decoration-none">
-      {% if o.video_path %}
+      {% if o.photo_path %}
+      <img src="{{ o.photo_path }}" class="offer-video" style="object-fit:cover;">
+      {% elif o.video_path %}
       <video class="offer-video" controls playsinline>
         <source src="{{ o.video_path }}">
       </video>
       {% else %}
       <div class="offer-video d-flex align-items-center justify-content-center text-white small">
-        (Sin vídeo)
+        (Sin imagen)
       </div>
       {% endif %}
     </a>
@@ -187,14 +189,16 @@
         {% endif %}
 
         <a href="/ui/offers/{{ o.id }}" class="mosaic-video-wrapper d-block text-decoration-none">
-          {% if o.video_path %}
+          {% if o.photo_path %}
+          <img src="{{ o.photo_path }}" class="mosaic-video-thumb" style="object-fit:cover;">
+          {% elif o.video_path %}
           <video class="mosaic-video-thumb" muted loop onmouseover="this.play()" onmouseout="this.pause()" playsinline>
             <source src="{{ o.video_path }}">
           </video>
           {% else %}
           <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-secondary text-white small"
             style="font-size:10px;">
-            Sin vídeo
+            Sin imagen
           </div>
           {% endif %}
           {% if o.price %}

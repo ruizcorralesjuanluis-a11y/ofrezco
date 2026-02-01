@@ -12,12 +12,21 @@
 <div class="card-soft overflow-hidden p-0 mt-3">
   <div class="px-3 py-2 bg-light border-bottom small fw-bold text-uppercase muted"
     style="letter-spacing:1px; font-size:11px;">
-    PASO 4 · VÍDEO Y REVISIÓN
+    PASO 4 · PORTADA Y VÍDEO
   </div>
 
   <div class="p-4 text-center border-bottom bg-white">
-    <p class="muted small mb-3">Graba un vídeo corto (max 30s) presentándote. Aumenta mucho tus posibilidades.</p>
+    <p class="muted small mb-3">1. Primero, haz una <b>foto de portada</b> para el anuncio.</p>
+    <label class="btn btn-outline-secondary pill d-inline-flex align-items-center gap-2 mb-3">
+      📸 Hacer / Subir Foto
+      <input id="wPhoto" type="file" accept="image/*" capture="environment" style="display:none"
+        onchange="document.getElementById('photoLabel').textContent = this.files[0]?.name || 'Foto seleccionada';" />
+    </label>
+    <div id="photoLabel" class="small mb-4 text-secondary fw-bold"></div>
 
+    <hr class="my-4">
+
+    <p class="muted small mb-3">2. Ahora, graba un <b>vídeo corto (max 15s)</b> presentándote.</p>
     <label class="btn btn-outline-primary pill d-inline-flex align-items-center gap-2">
       📹 Grabar / Subir Vídeo
       <input id="wVideo" type="file" accept="video/*" capture="environment" style="display:none"
@@ -116,33 +125,50 @@
       return;
     }
 
-    // 2) Subir vídeo si existe
-    const f = document.getElementById("wVideo").files[0];
-    if (f) {
+    // 2) Subir foto si existe
+    const photoFile = document.getElementById("wPhoto").files[0];
+    if (photoFile) {
       try {
         const fd = new FormData();
-        fd.append("file", f);
+        fd.append("file", photoFile);
+        const rPhoto = await fetch(`/api/v1/offers/${offer.id}/photo`, { method: "POST", body: fd });
+        if (!rPhoto.ok) {
+          const jP = await rPhoto.json();
+          throw new Error(jP.detail || "Error subiendo foto");
+        }
+      } catch (e) {
+        alert("Oferta creada, pero la foto falló: " + e.message);
+      }
+    }
+
+    // 3) Subir vídeo si existe
+    const videoFileActual = document.getElementById("wVideo").files[0];
+    if (videoFileActual) {
+      try {
+        const fd = new FormData();
+        fd.append("file", videoFileActual);
         const r2 = await fetch(`/api/v1/offers/${offer.id}/video`, { method: "POST", body: fd });
-        const j2 = await r2.json();
-        if (!r2.ok) throw new Error(j2.detail || ("HTTP " + r2.status));
-        offer = j2;
+        if (!r2.ok) {
+          const j2 = await r2.json();
+          throw new Error(j2.detail || "Error subiendo vídeo");
+        }
       } catch (e) {
         alert("Oferta creada, pero el vídeo falló: " + e.message);
         return;
       }
     }
 
-    // 3) Enviar a revisión (requiere vídeo según backend)
+    // 4) Enviar a revisión
     try {
       const r3 = await fetch(`/api/v1/offers/${offer.id}/submit`, { method: "POST" });
       const j3 = await r3.json();
       if (!r3.ok) throw new Error(j3.detail || ("HTTP " + r3.status));
-      // OK
+
       localStorage.removeItem(wDraftKey());
       alert("¡Oferta publicada con éxito!");
-      location.href = "/ui/offers"; // Ir al listado general para verla
+      location.href = "/ui/offers";
     } catch (e) {
-      alert("Oferta creada, pero no se pudo enviar a revisión: " + e.message);
+      alert("Oferta creada, pero no se pudo publicar: " + e.message);
     }
   }
 

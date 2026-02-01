@@ -138,7 +138,7 @@ def upload_offer_video(
     uploads_dir = "app/static/uploads"
     os.makedirs(uploads_dir, exist_ok=True)
 
-    filename = f"offer_{offer_id}{ext}"
+    filename = f"offer_{offer_id}_video{ext}"
     save_path = os.path.join(uploads_dir, filename)
 
     data = file.file.read()
@@ -175,23 +175,55 @@ def upload_offer_video(
     return offer
 
 
+@router.post("/offers/{offer_id}/photo", response_model=OfferOut)
+def upload_offer_photo(
+    offer_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    offer = db.execute(select(Offer).where(Offer.id == offer_id)).scalar_one_or_none()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer no encontrada.")
+
+    # Validar extensión de imagen
+    name = (file.filename or "").lower()
+    ext = ".jpg"
+    if name.endswith(".png"): ext = ".png"
+    elif name.endswith(".jpeg"): ext = ".jpeg"
+    elif name.endswith(".webp"): ext = ".webp"
+
+    uploads_dir = "app/static/uploads"
+    os.makedirs(uploads_dir, exist_ok=True)
+
+    filename = f"offer_{offer_id}_photo{ext}"
+    save_path = os.path.join(uploads_dir, filename)
+
+    data = file.file.read()
+    if not data:
+        raise HTTPException(status_code=400, detail="Archivo vacío.")
+
+    with open(save_path, "wb") as f:
+        f.write(data)
+
+    offer.photo_path = f"/static/uploads/{filename}"
+    db.commit()
+    db.refresh(offer)
+    return offer
+
+
 @router.delete("/offers/{offer_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_offer(offer_id: int, db: Session = Depends(get_db)):
     offer = db.execute(select(Offer).where(Offer.id == offer_id)).scalar_one_or_none()
     if not offer:
         raise HTTPException(status_code=404, detail="Offer no encontrada.")
     
-    # Opcional: Borrar archivo de vídeo si existe
-    if offer.video_path:
-        # video_path es relativo tipo "/static/uploads/..."
-        # Convertir a path absoluto o relativo al root del proyecto
-        # Asumiendo que empieza por /, lo quitamos
-        file_path = "app" + offer.video_path
-        if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except:
-                pass # Ignorar errores de borrado de archivo
+    # Borrar archivos si existen
+    for p in [offer.video_path, offer.photo_path]:
+        if p:
+            file_path = "app" + p
+            if os.path.exists(file_path):
+                try: os.remove(file_path)
+                except: pass
 
     db.delete(offer)
     db.commit()

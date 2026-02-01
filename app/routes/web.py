@@ -147,7 +147,7 @@ def ui_results(request: Request, db: Session = Depends(get_db), cat: str = None,
             "role": o.title,    # Mostramos el Título de la oferta como "Rol" principal
             "title": o.title,   # Mapping explicito para vista mosaico
             "category": o.category, # Mapping explicito para vista mosaico
-            "photo": (prof.photo if prof and prof.photo else "https://via.placeholder.com/56"), 
+            "photo": o.photo_path or (prof.photo if prof and prof.photo else "https://via.placeholder.com/56"), 
             # Priorizamos video de la oferta, si no, del perfil
             "video": getattr(o, "video_path", None) or (prof.video_url if prof else None),
             "distance_km": 1.2, # Fake distance

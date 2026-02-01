@@ -23,6 +23,7 @@ class Offer(Base):
     allergens = Column(String, nullable=True)
     status = Column(String, default="DRAFT", nullable=False)  # DRAFT/PENDING/APPROVED/REJECTED
     video_path = Column(String, nullable=True)
+    photo_path = Column(String, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, nullable=False)

@@ -32,6 +32,7 @@ class OfferOut(BaseModel):
     allergens: Optional[str] = None
     status: str
     video_path: Optional[str] = None
+    photo_path: Optional[str] = None
 
     # ✅ campos obligatorios en respuesta
     created_at: datetime
