@@ -228,15 +228,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/static/sw.js').catch(() => { });
-        // Sincronizar info de sesión con LocalStorage para que el JS frontend lo vea
-        (function () {
-          const profileId = "{{ user.profile_id if user and user.profile_id else '' }}";
-          if (profileId) {
-            localStorage.setItem("me_profile_id", profileId);
-          } else {
-            localStorage.removeItem("me_profile_id");
-          }
-        })();
+        // Sincronización movida al final del archivo para mayor fiabilidad
       });
     }
   </script>
@@ -293,10 +285,13 @@
     // Sincronizar info de sesión con LocalStorage (BRIDGE CRÍTICO)
     (function () {
       try {
-        const currentProfileId = "{{ user.profile_id if user and user.profile_id else '' }}";
-        console.log("DEBUG: Sincronizando Perfil ID:", currentProfileId);
-        if (currentProfileId) {
-          localStorage.setItem("me_profile_id", currentProfileId);
+        const profileId = "{{ user.profile_id if user and user.profile_id else '' }}";
+        if (profileId) {
+          localStorage.setItem("me_profile_id", profileId);
+          console.log("Sync Perfil:", profileId);
+        } else {
+          localStorage.removeItem("me_profile_id");
+          console.log("Sync Perfil: Limpiado");
         }
       } catch (e) { console.error("Error sync profile", e); }
     })();
