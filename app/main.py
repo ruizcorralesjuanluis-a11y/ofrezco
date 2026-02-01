@@ -36,6 +36,11 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 @app.on_event("startup")
 def on_startup():
+    print("--- DEBUG: Verificando variables de entorno ---")
+    print(f"GOOGLE_CLIENT_ID presente: {bool(settings.GOOGLE_CLIENT_ID)}")
+    print(f"GOOGLE_CLIENT_SECRET presente: {bool(settings.GOOGLE_CLIENT_SECRET)}")
+    print(f"SECRET_KEY presente: {bool(settings.SECRET_KEY)}")
+    print("---------------------------------------------")
     init_db()
 
 # Redirigir la raíz directamente a la UI visual
