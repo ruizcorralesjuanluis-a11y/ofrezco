@@ -83,7 +83,12 @@
   }
   async function publish() {
     const profileId = localStorage.getItem("me_profile_id");
-    if (!profileId) { alert("Selecciona o crea un Perfil en “Cuenta” primero."); return; }
+    const profileIdInt = parseInt(profileId);
+    if (!profileId || isNaN(profileIdInt)) {
+      alert("No se encontró un perfil válido. Por favor, ve a Cuenta y selecciona tu perfil.");
+      console.log("Profile ID in localStorage:", profileId);
+      return;
+    }
 
     const d = loadDraft();
     if (!d.category || !d.title) { alert("Faltan datos del paso 1."); return; }
@@ -99,16 +104,18 @@
 
     // 1) Crear oferta DRAFT
     const payload = {
-      profile_id: Number(profileId),
+      profile_id: profileIdInt,
       offer_kind: "SERVICE",
       category: d.category,
       title: d.title,
       description: (d.description || "").trim() || null,
-      price: (d.price == null ? null : Number(d.price)),
+      price: (d.price == null || d.price === "" ? null : Number(d.price)),
       currency: "EUR",
       available_now: !!d.available_now,
       allergens: d.specialty ? String(d.specialty) : null
     };
+
+    console.log("Publishing payload:", payload);
 
     let offer;
     try {
@@ -118,7 +125,12 @@
         body: JSON.stringify(payload)
       });
       const j = await r.json();
-      if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
+      if (!r.ok) {
+        console.error("Server error detail:", j);
+        // Si es un error de validación de Pydantic, j.detail suele ser una lista
+        const msg = (typeof j.detail === 'string') ? j.detail : JSON.stringify(j.detail);
+        throw new Error(msg || ("HTTP " + r.status));
+      }
       offer = j;
     } catch (e) {
       alert("Error creando oferta: " + e.message);
