@@ -1,6 +1,7 @@
 services:
   - type: web
     name: ofrezco-app
+    plan: free
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn -k uvicorn.workers.UvicornWorker app.main:app
