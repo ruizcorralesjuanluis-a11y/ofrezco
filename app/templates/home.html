@@ -13,10 +13,9 @@
   <p class="text-muted lead mb-5 mx-auto" style="max-width: 320px;">
     La app para encontrar profesionales de confianza o ganar dinero con tus habilidades.
   </p>
-  <div class="text-xs text-muted mb-4" style="font-size: 10px; opacity: 0.5;">Build ID: 2026-02-01-V4-LOGGING</div>
 
   <div class="d-grid gap-3" style="max-width: 340px; margin: 0 auto;">
-    <a href="/ui/need/new?mode=service"
+    <a href="/ui/need/new"
       class="btn btn-green pill py-3 fs-5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
       🔎 Necesito Ayuda
     </a>
@@ -24,22 +23,13 @@
       class="btn btn-white pill py-3 fs-5 fw-bold border shadow-sm d-flex align-items-center justify-content-center gap-2 text-dark">
       🤝 Ofrecer Servicio
     </a>
-    <a href="/ui/results?cat=Mercado+de+Segunda+Mano+(Venta)&mode=sales&exclude_cat=Inmobiliaria+(Pisos/Locales)&exclude_cat2=Vehículos+y+Motor"
+    <a href="/ui/results?cat=Mercado+de+Segunda+Mano+(Venta)"
       class="btn btn-warning pill py-3 fs-5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 text-dark">
       🛍️ Ir al Mercadillo
     </a>
-    <a href="/ui/offers/new?type=sales&exclude_cat=Inmobiliaria+(Pisos/Locales)&exclude_cat2=Vehículos+y+Motor"
+    <a href="/ui/offers/new?type=sales"
       class="btn btn-white pill py-3 fs-5 fw-bold border shadow-sm d-flex align-items-center justify-content-center gap-2 text-dark">
       🏪 Vender algo
-    </a>
-    <a href="/ui/results?cat=Inmobiliaria+(Pisos/Locales)&mode=sales"
-      class="btn btn-info pill py-3 fs-5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 text-white">
-      🏢 Inmobiliaria
-    </a>
-    <a href="/ui/results?cat=Vehículos+y+Motor&mode=sales"
-      class="btn btn-primary pill py-3 fs-5 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 text-white"
-      style="background-color: #002c5f !important; border:none;">
-      🚗 Motor
     </a>
   </div>
 
@@ -54,52 +44,4 @@
     </div>
   </div>
 </div>
-
-<script>
-  // Detectar si venimos de un redireccionamiento de login
-  document.addEventListener('DOMContentLoaded', function () {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('login_required')) {
-      const alertDiv = document.createElement('div');
-      alertDiv.className = 'alert alert-warning alert-dismissible fade show shadow-sm border-0 mb-4 mx-auto';
-      alertDiv.style.borderRadius = '15px';
-      alertDiv.style.maxWidth = '400px';
-      alertDiv.innerHTML = `
-        <div class="d-flex align-items-center gap-3">
-          <span style="font-size:1.5rem">🔐</span>
-          <div class="text-start">
-            <h6 class="alert-heading fw-bold mb-1">¡Inicia sesión primero!</h6>
-            <p class="mb-0 small text-muted">Debes acceder con tu cuenta para poder ofrecer servicios o vender artículos.</p>
-          </div>
-        </div>
-        <div class="d-grid mt-3">
-          <a href="/login" class="btn btn-dark pill btn-sm">Acceder ahora</a>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      `;
-      const hero = document.querySelector('.home-hero');
-      if (hero) hero.prepend(alertDiv);
-    } else if (urlParams.get('profile_required')) {
-      const alertDiv = document.createElement('div');
-      alertDiv.className = 'alert alert-info alert-dismissible fade show shadow-sm border-0 mb-4 mx-auto';
-      alertDiv.style.borderRadius = '15px';
-      alertDiv.style.maxWidth = '400px';
-      alertDiv.innerHTML = `
-        <div class="d-flex align-items-center gap-3">
-          <span style="font-size:1.5rem">👤</span>
-          <div class="text-start">
-            <h6 class="alert-heading fw-bold mb-1">Crea tu Perfil Profesional</h6>
-            <p class="mb-0 small text-muted">Antes de publicar tu primera oferta, necesitamos crear tu perfil de trabajador.</p>
-          </div>
-        </div>
-        <div class="d-grid mt-3">
-          <button onclick="openCreateProfile()" class="btn btn-primary pill btn-sm">Crear Perfil ahora</button>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      `;
-      const hero = document.querySelector('.home-hero');
-      if (hero) hero.prepend(alertDiv);
-    }
-  });
-</script>
 {% endblock %}

@@ -88,21 +88,6 @@
     color: #16a34a;
     float: right;
   }
-
-  .mosaic-video-wrapper {
-    width: 100%;
-    height: 120px;
-    background: #000;
-    position: relative;
-    overflow: hidden;
-    border-radius: 8px;
-  }
-
-  .mosaic-video-thumb {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
 </style>
 
 <div class="pro-header">
@@ -121,375 +106,58 @@
   </div>
 </div>
 
-{% if service_offers %}
 <div class="pro-section">
-  <div class="section-title">Servicios ({{ service_offers|length }})</div>
-  {% for o in service_offers %}
+  <div class="section-title">Mis Servicios ({{ offers|length }})</div>
+
+  {% if offers|length == 0 %}
+  <div class="text-center text-muted py-3">No hay ofertas publicadas.</div>
+  {% endif %}
+
+  {% for o in offers %}
   <div class="offer-card position-relative" id="offer-{{ o.id }}">
-    {% if is_me %}
-    <button class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle shadow-sm"
+    {% if user and user.profile_id == p.id %}
+    <button class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle"
       onclick="deleteOffer({{ o.id }})"
       style="z-index:10; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">
       🗑
     </button>
     {% endif %}
 
-    <a href="/ui/offers/{{ o.id }}" class="text-decoration-none">
-      {% if o.photo_path %}
-      <img src="{{ o.photo_path }}" class="offer-video" style="object-fit:cover;">
-      {% elif o.video_path %}
-      <video class="offer-video" controls playsinline>
-        <source src="{{ o.video_path }}">
-      </video>
-      {% else %}
-      <div class="offer-video d-flex align-items-center justify-content-center text-white small">
-        (Sin imagen)
-      </div>
-      {% endif %}
-    </a>
+    {% if o.video_path %}
+    <video class="offer-video" controls playsinline poster="https://via.placeholder.com/400x200?text=Video+Oferta">
+      <source src="{{ o.video_path }}" type="video/mp4">
+      <source src="{{ o.video_path }}" type="video/quicktime">
+      Tu móvil no soporta este vídeo.
+    </video>
+    {% else %}
+    <div class="offer-video d-flex align-items-center justify-content-center text-white">
+      (Sin vídeo)
+    </div>
+    {% endif %}
 
     <div class="offer-body">
       {% if o.price %}
       <div class="offer-price">{{ o.price }} €</div>
       {% endif %}
       <div class="offer-title">{{ o.title }}</div>
+      <div class="text-secondary small mb-2">{{ o.description }}</div>
       <div class="text-muted small">{{ o.category }}</div>
-
-      <div class="mt-2 d-flex align-items-center justify-content-between">
-        {% if is_me %}
-        <span class="badge bg-warning text-dark interest-badge" data-offer-id="{{ o.id }}" style="display:none">
-          ✋ <span class="count">0</span> interesados
-        </span>
-        {% else %}
-        <button class="btn btn-sm btn-outline-primary pill" onclick="sendInterest({{ o.id }}, this)">
-          ✋ Me interesa
-        </button>
-        {% endif %}
-      </div>
     </div>
   </div>
   {% endfor %}
 </div>
-{% endif %}
-
-{% if sales_offers %}
-<div class="pro-section">
-  <div class="section-title">Artículos de Venta ({{ sales_offers|length }})</div>
-  <div class="row g-2">
-    {% for o in sales_offers %}
-    <div class="col-6 mb-2" id="offer-{{ o.id }}">
-      <div class="card h-100 border shadow-sm position-relative overflow-hidden"
-        style="border-radius:12px; background:#f9fafb;">
-        {% if is_me %}
-        <button class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle shadow-sm"
-          onclick="deleteOffer({{ o.id }})"
-          style="z-index:10; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size: 10px;">
-          🗑
-        </button>
-        {% endif %}
-
-        <a href="/ui/offers/{{ o.id }}" class="mosaic-video-wrapper d-block text-decoration-none">
-          {% if o.photo_path %}
-          <img src="{{ o.photo_path }}" class="mosaic-video-thumb" style="object-fit:cover;">
-          {% elif o.video_path %}
-          <video class="mosaic-video-thumb" muted loop onmouseover="this.play()" onmouseout="this.pause()" playsinline>
-            <source src="{{ o.video_path }}">
-          </video>
-          {% else %}
-          <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-secondary text-white small"
-            style="font-size:10px;">
-            Sin imagen
-          </div>
-          {% endif %}
-          {% if o.price %}
-          <div class="badge bg-success position-absolute top-0 start-0 m-2 shadow-sm"
-            style="font-size:10px; font-weight:800; z-index:5;">
-            {{ o.price }} €
-          </div>
-          {% endif %}
-        </a>
-
-        <div class="p-2">
-          <div class="fw-bold text-truncate" style="font-size:13px; line-height:1.2;">{{ o.title }}</div>
-          <div class="text-muted" style="font-size:10px; line-height:1.2;">{{ o.category }}</div>
-
-          <div class="mt-2 text-center">
-            {% if is_me %}
-            <span class="badge bg-warning text-dark interest-badge" data-offer-id="{{ o.id }}"
-              style="display:none; font-size:10px;">
-              ✋ <span class="count">0</span>
-            </span>
-            {% else %}
-            <button class="btn btn-sm btn-outline-primary pill w-100" onclick="sendInterest({{ o.id }}, this)"
-              style="font-size:10px; padding:2px 5px;">
-              Me interesa
-            </button>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-</div>
-{% endif %}
-
-{% if not service_offers and not sales_offers %}
-<div class="pro-section">
-  <div class="text-center text-muted py-3">No hay ofertas publicadas.</div>
-</div>
-{% endif %}
-
-<script>
-  async function sendInterest(offerId, btn) {
-    try {
-      const res = await fetch("/api/v1/interests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ offer_id: offerId })
-      });
-      if (res.ok) {
-        btn.innerHTML = "✅ Interés enviado";
-        btn.classList.remove("btn-outline-primary");
-        btn.classList.add("btn-success");
-        btn.disabled = true;
-
-        // Opcional: Abrir WhatsApp del dueño
-        if (confirm("¿Quieres escribirle por WhatsApp ahora?")) {
-          const phone = "{{ p.phone }}";
-          if (phone) {
-            window.open(`https://wa.me/${phone.replace('+', '').replace(' ', '')}?text=Hola,%20me%20interesa%20tu%20oferta`, '_blank');
-          } else {
-            alert("Este usuario no tiene WhatsApp configurado.");
-          }
-        }
-      }
-    } catch (e) {
-      alert("Error de conexión");
-    }
-  }
-
-  // Cargar contadores si soy yo
-  {% if is_me %}
-  (async () => {
-    try {
-      const res = await fetch("/api/v1/interests/my-offers");
-      const data = await res.json();
-      data.forEach(item => {
-        const badge = document.querySelector(`.interest-badge[data-offer-id="${item.offer_id}"]`);
-        if (badge) {
-          badge.querySelector(".count").textContent = item.interested_count;
-          badge.style.display = "inline-block";
-        }
-      });
-    } catch (e) { console.error(e); }
-  })();
-  {% endif %}
-</script>
-
-{% if p.address or (p.lat and p.lon) %}
-<div class="px-3 mb-4">
-  <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 15px;">
-    <div class="card-body p-0">
-      {% if p.lat and p.lon %}
-      <iframe width="100%" height="200" frameborder="0" style="border:0"
-        src="https://maps.google.com/maps?q={{ p.lat }},{{ p.lon }}&hl=es&z=15&output=embed">
-      </iframe>
-      {% else %}
-      <iframe width="100%" height="200" frameborder="0" style="border:0"
-        src="https://maps.google.com/maps?q={{ p.address }}&hl=es&z=15&output=embed">
-      </iframe>
-      {% endif %}
-      <div class="p-2 text-center bg-light small text-muted">
-        📍 {{ p.address or 'Ubicación aproximada' }}
-      </div>
-    </div>
-  </div>
-</div>
-{% endif %}
 
 <div class="p-3 mt-2 mb-4">
-  {% if is_me %}
+  {% if user and user.profile_id == p.id %}
   <a class="btn btn-outline-dark w-100 pill py-3 fw-bold mb-3" href="/ui/profile/{{ p.id }}/edit">
     ✏️ Editar mi perfil
   </a>
-  <div class="text-center text-muted small">
-    Rellena tu <b>teléfono</b> en "Editar" para que te puedan contactar.
-  </div>
   {% else %}
-  {% if p.phone %}
-  <a class="btn btn-primary w-100 pill py-3 fw-bold d-flex align-items-center justify-content-center gap-2"
-    href="https://wa.me/{{ p.phone.replace('+', '').replace(' ', '') }}?text=Hola,%20vi%20tu%20perfil%20en%20Ofrezco"
-    target="_blank">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-whatsapp"
-      viewBox="0 0 16 16">
-      <path
-        d="M13.601 2.326A7.854 7.854 0 0 0 8 0C3.58 0 0 3.58 0 8c0 1.379.31 2.673.81 3.829l-1.077 3.57 3.733-.996A7.85 7.85 0 0 0 8 16c4.42 0 8-3.58 8-8s-3.58-8-8-8zM8 14.5a6.47 6.47 0 0 1-3.26-.88l-.234-.14-2.27.606.608-2.203-.153-.235A6.477 6.477 0 0 1 2.25 8c0-3.584 2.916-6.5 6.5-6.5s6.5 2.916 6.5 6.5-2.916 6.5-6.5 6.5z" />
-    </svg>
-    Contactar por WhatsApp
-  </a>
-  {% else %}
-  <button class="btn btn-secondary w-100 pill py-3 fw-bold" disabled>
-    Este usuario no tiene WhatsApp 📵
-  </button>
-  {% endif %}
-  {% endif %}
-</div>
-
-<!-- SECCIÓN RESEÑAS -->
-<div class="pro-section" id="reviews-section">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div class="section-title m-0">Reseñas <span id="rating-count" class="text-muted fw-normal">(0)</span></div>
-    <div class="d-flex align-items-center gap-2">
-      <span class="fs-4 fw-bold text-warning">★ <span id="rating-avg" class="text-dark">--</span></span>
-    </div>
-  </div>
-
-  <div id="reviews-list" class="vstack gap-3 mb-3">
-    <!-- Se llena con JS -->
-    <div class="text-center text-muted py-2 small">Cargando opiniones...</div>
-  </div>
-
-  {% if user and user.id %}
-  <button class="btn btn-outline-primary w-100 pill" onclick="openReviewModal()">
-    ★ Escribir una reseña
+  <button class="btn btn-dark w-100 pill py-3 fw-bold" onclick="alert('Funcionalidad de chat próximamente 💬')">
+    Contactar con {{ p.user_name }}
   </button>
   {% endif %}
 </div>
-
-<!-- MODAL NUEVA RESEÑA -->
-<div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-bottom">
-    <!-- modal-dialog-bottom para estilo móvil si existe css, sino normal -->
-    <div class="modal-content rounded-top-4">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold">Valorar a {{ p.user_name }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="d-flex justify-content-center gap-2 my-3">
-          <!-- Estrellas seleccionables -->
-          {% for i in range(1, 6) %}
-          <button type="button" class="btn btn-lg btn-link text-decoration-none text-secondary p-0 star-btn"
-            onclick="setRating({{ i }})" id="star-{{ i }}" style="font-size: 2rem;">★</button>
-          {% endfor %}
-        </div>
-        <input type="hidden" id="r-score" value="0">
-
-        <div class="mb-3">
-          <label class="form-label fw-bold small text-uppercase text-muted">Tu opinión</label>
-          <textarea id="r-comment" class="form-control" rows="3" placeholder="¿Qué tal fue el servicio?"></textarea>
-        </div>
-
-        <button class="btn btn-primary w-100 pill py-3 fw-bold" onclick="submitReview()">Publicar Reseña</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-  const profileId = {{ p.id }};
-  const currentUserId = {{ user.id if user and user.id else 'null' }};
-  let myModal = null;
-
-  async function loadRatings() {
-    const list = document.getElementById('reviews-list');
-    try {
-      // 1. Cargar lista
-      const r = await fetch(`/api/v1/profiles/${profileId}/ratings`);
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      const ratings = await r.json();
-
-      list.innerHTML = "";
-
-      if (ratings.length === 0) {
-        list.innerHTML = `<div class="text-center text-muted py-2 small">Aún no hay reseñas. ¡Sé el primero!</div>`;
-      } else {
-        ratings.forEach(rat => {
-          const date = new Date(rat.created_at).toLocaleDateString();
-          list.innerHTML += `
-                    <div class="bg-light rounded-3 p-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="fw-bold small">${rat.author_name}</span>
-                            <span class="text-muted small" style="font-size:0.75rem">${date}</span>
-                        </div>
-                        <div class="text-warning small mb-1">
-                            ${'★'.repeat(rat.score)}${'☆'.repeat(5 - rat.score)}
-                        </div>
-                        <div class="small text-secondary">${rat.comment || ''}</div>
-                    </div>
-                `;
-        });
-      }
-
-      // 2. Cargar stats (media)
-      const s = await fetch(`/api/v1/profiles/${profileId}/stats`);
-      if (s.ok) {
-        const stats = await s.json();
-        document.getElementById('rating-count').textContent = `(${stats.count})`;
-        document.getElementById('rating-avg').textContent = stats.count > 0 ? stats.average : '--';
-      }
-
-    } catch (e) {
-      console.error("Error loading ratings", e);
-      list.innerHTML = `<div class="text-center text-danger py-2 small">Error cargando opiniones: ${e.message}</div>`;
-    }
-  }
-
-  function openReviewModal() {
-    myModal = new bootstrap.Modal(document.getElementById('reviewModal'));
-    myModal.show();
-  }
-
-  function setRating(n) {
-    document.getElementById('r-score').value = n;
-    for (let i = 1; i <= 5; i++) {
-      const el = document.getElementById(`star-${i}`);
-      if (i <= n) {
-        el.classList.remove('text-secondary');
-        el.classList.add('text-warning');
-      } else {
-        el.classList.add('text-secondary');
-        el.classList.remove('text-warning');
-      }
-    }
-  }
-
-  async function submitReview() {
-    const score = parseInt(document.getElementById('r-score').value);
-    const comment = document.getElementById('r-comment').value.trim();
-
-    if (score === 0) { alert("Por favor selecciona una puntuación."); return; }
-    if (!currentUserId) { alert("Debes iniciar sesión."); return; }
-
-    try {
-      const res = await fetch("/api/v1/ratings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          profile_id: profileId,
-          author_id: currentUserId,
-          score: score,
-          comment: comment
-        })
-      });
-
-      if (res.ok) {
-        alert("¡Reseña publicada!");
-        if (myModal) myModal.hide();
-        loadRatings(); // Recargar
-      } else {
-        const err = await res.json();
-        alert("Error: " + (err.detail || "No se pudo publicar"));
-      }
-    } catch (e) {
-      alert("Error de red: " + e);
-    }
-  }
-
-  // Init
-  loadRatings();
-</script>
 
 <script>
   async function deleteOffer(id) {

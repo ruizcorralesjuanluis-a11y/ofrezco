@@ -63,53 +63,35 @@
   .pill {
     border-radius: 10px;
   }
+
+  .text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
+  }
 </style>
 
 <!-- RESULTADOS -->
 <div class="mt-3">
-  <!-- Buscador Integrado -->
-  <div class="px-2 mb-3">
-    <form action="/ui/results" method="get" class="position-relative">
-      <input type="hidden" name="cat" value="{{ cat }}">
-      <input type="hidden" name="mode" value="{{ mode }}">
-      <div class="input-group bg-light rounded-pill px-3 py-1 border shadow-sm">
-        <span class="input-group-text bg-transparent border-0 text-muted px-0">🔍</span>
-        <input type="text" name="q" class="form-control bg-transparent border-0 shadow-none"
-          placeholder="Buscar en {{ 'Mercadillo' if mode == 'sales' else 'Servicios' }}..." value="{{ q }}">
-        {% if q %}
-        <a href="/ui/results?cat={{ cat }}&mode={{ mode }}"
-          class="btn btn-link text-decoration-none text-muted p-0 d-flex align-items-center">✕</a>
-        {% endif %}
-      </div>
-    </form>
-  </div>
-
-  {% if cat and ('Inmobiliaria' in cat or 'Vehículos' in cat) %}
-  <div class="px-3 mb-3 d-grid">
-    <a href="/ui/offers/new?type=sales&fixed_cat={{ cat }}"
-      class="btn btn-dark pill fw-bold d-flex align-items-center justify-content-center gap-2 py-2">
-      ➕ Publicar en {{ cat.split('(')[0] | trim }}
-    </a>
-  </div>
-  {% endif %}
   {% if view_mode == 'mosaic' %}
   <!-- MOSAICO PARA PRODUCTOS -->
   <div class="row g-2">
     {% for p in results %}
     <div class="col-6">
-      <a href="/ui/offers/{{ p.offer_id }}" class="text-decoration-none text-dark">
+      <a href="/ui/profile/{{ p.id }}" class="text-decoration-none text-dark">
         <div class="card h-100 border-0 shadow-sm" style="border-radius:12px; overflow:hidden;">
           <!-- Video/Foto Preview -->
           <div class="bg-dark d-flex align-items-center justify-content-center"
             style="height:140px; position:relative;">
-            {% if p.photo %}
-            <img src="{{ p.photo }}" class="w-100 h-100" style="object-fit:cover;">
-            {% elif p.video %}
+            {% if p.video %}
             <video src="{{ p.video }}" class="w-100 h-100" style="object-fit:cover;" muted loop
               onmouseover="this.play()" onmouseout="this.pause()"></video>
             {% else %}
             <!-- Placeholder sin foto -->
-            <span style="color:white; font-size:10px;">Sin imagen</span>
+            <span style="color:white; font-size:10px;">Sin vídeo</span>
             {% endif %}
 
             <div class="badge bg-success text-white position-absolute top-0 start-0 m-2 shadow-sm"
@@ -120,49 +102,6 @@
           <div class="p-2">
             <div class="fw-bold text-truncate" style="font-size:14px;">{{ p.title }}</div>
             <div class="text-muted small text-truncate">{{ p.category }}</div>
-
-            <!-- EXTRAS INMOBILIARIA (Mosaic) -->
-            {% if p.extra_info and (p.extra_info.rooms or p.extra_info.sqm or p.extra_info.bathrooms or
-            p.extra_info.floor or p.extra_info.lift or p.extra_info.terrace or p.extra_info.ac or p.extra_info.parking)
-            %}
-            <div class="d-flex flex-wrap gap-1 mt-1 mb-1">
-              {% if p.extra_info.rooms %}<span class="badge bg-light text-dark border small" style="font-size:10px;">🛏
-                {{ p.extra_info.rooms }}</span>{% endif %}
-              {% if p.extra_info.sqm %}<span class="badge bg-light text-dark border small" style="font-size:10px;">📐 {{
-                p.extra_info.sqm }} m²</span>{% endif %}
-              {% if p.extra_info.bathrooms %}<span class="badge bg-light text-dark border small"
-                style="font-size:10px;">🚿 {{ p.extra_info.bathrooms }}</span>{% endif %}
-              {% if p.extra_info.floor %}<span class="badge bg-light text-dark border small" style="font-size:10px;">🏢
-                P. {{ p.extra_info.floor }}</span>{% endif %}
-              {% if p.extra_info.lift %}<span class="badge bg-light text-dark border small"
-                style="font-size:10px;">🛗</span>{% endif %}
-              {% if p.extra_info.terrace %}<span class="badge bg-light text-dark border small"
-                style="font-size:10px;">🌅</span>{% endif %}
-              {% if p.extra_info.ac %}<span class="badge bg-light text-dark border small"
-                style="font-size:10px;">❄️</span>{% endif %}
-              {% if p.extra_info.parking %}<span class="badge bg-light text-dark border small"
-                style="font-size:10px;">🚗</span>{% endif %}
-
-              {% if p.extra_info.car_brand %}<span class="badge bg-light text-dark border small"
-                style="font-size:10px;">🚗 {{ p.extra_info.car_brand }} {{ p.extra_info.car_model }}</span>{% endif %}
-              {% if p.extra_info.car_year %}<span class="badge bg-light text-dark border small"
-                style="font-size:10px;">📅 {{ p.extra_info.car_year }}</span>{% endif %}
-              {% if p.extra_info.car_km %}<span class="badge bg-light text-dark border small"
-                style="font-size:10px;">🛣️ {{ p.extra_info.car_km }} km</span>{% endif %}
-              {% if p.extra_info.car_fuel %}<span class="badge bg-light text-dark border small"
-                style="font-size:10px;">⛽ {{ p.extra_info.car_fuel }}</span>{% endif %}
-              {% if p.extra_info.car_trans %}<span class="badge bg-light text-dark border small"
-                style="font-size:10px;">⚙️ Auto</span>{% endif %}
-            </div>
-            {% endif %}
-            {% if p.rating_count > 0 %}
-            <div class="d-flex align-items-center gap-1 mt-1">
-              <span class="text-warning fw-bold" style="font-size:13px;">★ {{ p.rating_avg }}</span>
-              <span class="text-muted" style="font-size:11px;">({{ p.rating_count }})</span>
-            </div>
-            {% else %}
-            <div class="text-muted mt-1" style="font-size:11px;">Sin valoraciones</div>
-            {% endif %}
           </div>
         </div>
       </a>
@@ -178,75 +117,26 @@
   <!-- LISTA PARA SERVICIOS (Original) -->
   <div class="d-flex flex-column gap-3">
     {% for p in results %}
-    <a href="/ui/offers/{{ p.offer_id }}" class="text-decoration-none text-dark">
+    <a href="/ui/profile/{{ p.id }}" class="text-decoration-none text-dark">
       <div class="card-soft p-3 d-flex align-items-center gap-3">
-        {% if p.photo %}
-        <img src="{{ p.photo }}" class="rounded-circle"
-          style="width:56px; height:56px; object-fit:cover; flex-shrink:0; border:1px solid #eee;">
-        {% elif p.video %}
-        <div
-          style="width:56px; height:56px; border-radius:50%; overflow:hidden; background:#000; border:1px solid #eee; flex-shrink:0;">
-          <video src="{{ p.video }}" class="w-100 h-100" style="object-fit:cover;" muted loop onmouseover="this.play()"
-            onmouseout="this.pause()"></video>
-        </div>
-        {% else %}
-        <img src="https://via.placeholder.com/56" class="rounded-circle bg-secondary"
-          style="width:56px; height:56px; object-fit:cover; flex-shrink:0;">
-        {% endif %}
+        <img src="{{ p.photo }}" class="rounded-circle bg-secondary" style="width:56px; height:56px; object-fit:cover;">
         <div class="flex-grow-1" style="min-width:0;">
-          <div class="d-flex justify-content-between align-items-center">
-            <h6 class="mb-0 fw-bold text-truncate">{{ p.name }}</h6>
-            <div class="d-flex flex-column align-items-end">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="mb-0 fw-bold text-truncate">{{ p.role }}</h6>
+              <div class="text-secondary small text-truncate-2 mt-1">{{ p.desc }}</div>
+            </div>
+            <div class="d-flex flex-column align-items-end flex-shrink-0 ms-2">
               <span class="badge bg-light text-dark border mb-1">{{ p.distance_km }} km</span>
               {% if p.price is not none %}
               <span class="badge bg-success bg-opacity-10 text-success border border-success">{{ p.price }} €</span>
               {% endif %}
             </div>
           </div>
-          <div class="text-primary small mb-1">{{ p.role }}</div>
           <div class="d-flex align-items-center gap-2 small muted">
             <span>{{ p.offer_cat }}</span>
             <span>•</span>
             <span>{{ p.status }}</span>
-            {% if p.rating_count > 0 %}
-            <span>•</span>
-            <span class="text-warning fw-bold">★ {{ p.rating_avg }} ({{ p.rating_count }})</span>
-            {% endif %}
-
-            <!-- EXTRAS INMOBILIARIA (List) -->
-            {% if p.extra_info and (p.extra_info.rooms or p.extra_info.sqm or p.extra_info.bathrooms or
-            p.extra_info.floor or p.extra_info.lift or p.extra_info.terrace or p.extra_info.ac or p.extra_info.parking)
-            %}
-            <div class="d-flex flex-wrap gap-2 mt-1">
-              {% if p.extra_info.rooms %}<span class="badge bg-info bg-opacity-10 text-info small"
-                style="font-size:10px;">🛏 {{ p.extra_info.rooms }} hab.</span>{% endif %}
-              {% if p.extra_info.sqm %}<span class="badge bg-info bg-opacity-10 text-info small"
-                style="font-size:10px;">📐 {{ p.extra_info.sqm }} m²</span>{% endif %}
-              {% if p.extra_info.bathrooms %}<span class="badge bg-info bg-opacity-10 text-info small"
-                style="font-size:10px;">🚿 {{ p.extra_info.bathrooms }} baños</span>{% endif %}
-              {% if p.extra_info.floor %}<span class="badge bg-info bg-opacity-10 text-info small"
-                style="font-size:10px;">🏢 Planta {{ p.extra_info.floor }}</span>{% endif %}
-              {% if p.extra_info.lift %}<span class="badge bg-info bg-opacity-10 text-info small"
-                style="font-size:10px;">🛗 Ascensor</span>{% endif %}
-              {% if p.extra_info.terrace %}<span class="badge bg-info bg-opacity-10 text-info small"
-                style="font-size:10px;">🌅 Terraza</span>{% endif %}
-              {% if p.extra_info.ac %}<span class="badge bg-info bg-opacity-10 text-info small"
-                style="font-size:10px;">❄️ AC</span>{% endif %}
-              {% if p.extra_info.parking %}<span class="badge bg-info bg-opacity-10 text-info small"
-                style="font-size:10px;">🚗 Garaje</span>{% endif %}
-
-              {% if p.extra_info.car_brand %}<span class="badge bg-primary bg-opacity-10 text-primary small"
-                style="font-size:10px;">🚗 {{ p.extra_info.car_brand }} {{ p.extra_info.car_model }}</span>{% endif %}
-              {% if p.extra_info.car_year %}<span class="badge bg-primary bg-opacity-10 text-primary small"
-                style="font-size:10px;">📅 {{ p.extra_info.car_year }}</span>{% endif %}
-              {% if p.extra_info.car_km %}<span class="badge bg-primary bg-opacity-10 text-primary small"
-                style="font-size:10px;">🛣️ {{ p.extra_info.car_km }} km</span>{% endif %}
-              {% if p.extra_info.car_fuel %}<span class="badge bg-primary bg-opacity-10 text-primary small"
-                style="font-size:10px;">⛽ {{ p.extra_info.car_fuel }}</span>{% endif %}
-              {% if p.extra_info.car_trans %}<span class="badge bg-primary bg-opacity-10 text-primary small"
-                style="font-size:10px;">⚙️ Automático</span>{% endif %}
-            </div>
-            {% endif %}
           </div>
         </div>
       </div>

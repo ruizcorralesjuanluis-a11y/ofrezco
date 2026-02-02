@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional
 from datetime import datetime
 
 
@@ -13,7 +13,6 @@ class OfferCreate(BaseModel):
     currency: Optional[str] = "EUR"
     available_now: bool = False
     allergens: Optional[str] = None
-    extra_info: Optional[Dict[str, Any]] = None
 
 
 class OfferStatusUpdate(BaseModel):
@@ -33,8 +32,6 @@ class OfferOut(BaseModel):
     allergens: Optional[str] = None
     status: str
     video_path: Optional[str] = None
-    photo_path: Optional[str] = None
-    extra_info: Optional[Dict[str, Any]] = None
 
     # ✅ campos obligatorios en respuesta
     created_at: datetime
