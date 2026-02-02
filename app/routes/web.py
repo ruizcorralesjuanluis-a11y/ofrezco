@@ -8,7 +8,7 @@ from app.db.session import get_db
 from app.models.offer import Offer
 from app.models.profile import Profile
 from app.models.user import User
-from app.core.data import CATEGORIES
+from app.core.data import CATEGORIES, get_flattened_categories, get_sales_categories
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -56,6 +56,7 @@ def ui_need_new(request: Request):
             "back_url": "/ui",
             "user": get_user_context(request),
             "categories": CATEGORIES,
+            "mode": request.query_params.get("mode", ""),
         },
     )
 
@@ -71,27 +72,46 @@ def ui_results(
     request: Request,
     q: str = "",
     cat: str = "",
+    mode: str = "",
     urg: str = "",
     db: Session = Depends(get_db)  # Inyección de DB
 ):
+    sales_cats = get_sales_categories()
+
     # 1. Determinar si es búsqueda de productos (Mercadillo, Inmo, Motor)
     is_product_search = False
-    product_cats = [
-        "Mercadillo y Segunda Mano", 
+    mosaic_cats = [
         "Mercado de Segunda Mano (Venta)",
-        "Venta de cosas", 
         "Inmobiliaria (Pisos/Locales)",
-        "Vehículos y Motor"
+        "Vehículos y Motor",
+        "Moda y Accesorios",
+        "Electrónica y Móviles",
+        "Hogar y Muebles"
     ]
-    if cat in product_cats:
+    if cat in mosaic_cats or mode == "sales":
         is_product_search = True
         view_mode = "mosaic"
+    else:
+        view_mode = "list"
 
     # Siempre usamos el modelo Offer en esta versión del proyecto
     query = select(Offer).where(Offer.status == "PUBLISHED").order_by(Offer.id.desc())
 
-    # Filtrado por categoría (exceptuando el nombre del grupo principal si se desea ver todo)
-    if cat and cat != "Todas" and cat != "Mercado de Segunda Mano (Venta)":
+    # 2. Lógica de filtrado estricto
+    if cat == "Inmobiliaria (Pisos/Locales)":
+        query = query.where(Offer.category == "Inmobiliaria (Pisos/Locales)")
+    elif cat == "Vehículos y Motor":
+        query = query.where(Offer.category == "Vehículos y Motor")
+    elif cat == "Mercado de Segunda Mano (Venta)":
+        # Todo el mercadillo EXCEPTO Inmo y Motor
+        query = query.where(Offer.category.in_(sales_cats))
+        query = query.where(Offer.category.notin_(["Inmobiliaria (Pisos/Locales)", "Vehículos y Motor"]))
+    elif mode == "service":
+        # Solo servicios: excluir TODAS las de venta
+        query = query.where(Offer.category.notin_(sales_cats))
+    
+    # Si hay una categoría específica manual (ej. "Electricidad")
+    if cat and cat not in ["Todas", "Mercado de Segunda Mano (Venta)", "Inmobiliaria (Pisos/Locales)", "Vehículos y Motor"]:
         query = query.where(Offer.category == cat)
     
     if q:
