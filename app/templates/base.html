@@ -61,14 +61,26 @@
     <div class="container container-narrow">
       <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/ui">
         <img src="/static/img/logo.png" width="32" height="32" class="rounded-3" alt="Logo">
-        OFREZCO DEV - VERIFICACION
+        Ofrezco
       </a>
 
       <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
 
         <a class="btn btn-sm menu-btn pill" href="/ui">Inicio</a>
-        <a class="btn btn-sm menu-btn pill" href="/ui/offers/new">Publicar</a>
-        <a class="btn btn-sm menu-btn pill" href="/ui/offers">Ofertas</a>
+        <div class="dropdown">
+          <button class="btn btn-sm menu-btn pill dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            Publicar
+          </button>
+          <ul class="dropdown-menu shadow-sm border-0 p-2" style="border-radius:12px;">
+            <li><a class="dropdown-item rounded-3" href="/ui/offers/new?type=service">🤝 Ofrecer Servicio</a></li>
+            <li><a class="dropdown-item rounded-3" href="/ui/offers/new?type=sales">🏪 Vender algo</a></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li><a class="dropdown-item rounded-3" href="/ui/need/new?mode=service">🔎 Busco ayuda</a></li>
+          </ul>
+        </div>
+        <a class="btn btn-sm menu-btn pill" href="/ui/offers">Mis Anuncios</a>
         <a class="btn btn-sm menu-btn pill" href="/ui/admin">Admin</a>
         <a class="btn btn-sm menu-btn pill" href="/docs">API</a>
 
@@ -124,9 +136,6 @@
       <div class="d-grid gap-2">
         <a class="btn btn-outline-dark pill" href="/ui">Inicio</a>
         <a class="btn btn-outline-dark pill" href="/ui/offers/new">Publicar oferta</a>
-        <a class="btn btn-outline-dark pill" href="/ui/offers">Ofertas</a>
-        <a class="btn btn-outline-dark pill" href="/ui/admin">Admin</a>
-        <a class="btn btn-outline-dark pill" href="/docs">API</a>
       </div>
       <hr class="my-4">
       <hr class="my-4">
@@ -219,16 +228,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/static/sw.js').catch(() => { });
-        // Sincronizar info de sesión con LocalStorage para que el JS frontend lo vea
-        (function () {
-          const currentProfileId = "{{ user.profile_id if user and user.profile_id else '' }}";
-          if (currentProfileId) {
-            localStorage.setItem("me_profile_id", currentProfileId);
-          } else {
-            // Si no hay perfil en sesión, lo borramos de local por si acaso (o lo dejamos si queremos persistencia extrema)
-            // localStorage.removeItem("me_profile_id"); 
-          }
-        })();
+        // Sincronización movida al final del archivo para mayor fiabilidad
       });
     }
   </script>
@@ -245,31 +245,43 @@
     }
 
     async function createProfile() {
-      const uid = "{{ user.id if user else '' }}";
-      if (!uid) { alert("Debes iniciar sesión primero"); return; }
+      const uidRaw = "{{ user.id if user else '' }}";
+      if (!uidRaw) { alert("Debes iniciar sesión primero"); return; }
+      const uid = Number(uidRaw);
 
       const profile_type = document.getElementById("profileType").value;
+      const resInfo = document.getElementById("profileResult");
 
-      const res = await fetch(`${API}/profiles`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: uid, profile_type })
-      });
+      try {
+        const res = await fetch(`${API}/profiles`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: uid, profile_type })
+        });
 
-      const text = await res.text();
-      if (!res.ok) {
-        const resInfo = document.getElementById("profileResult");
+        const data = await res.json();
+        if (!res.ok) {
+          const errMsg = data.detail || "Error desconocido";
+          if (resInfo) {
+            resInfo.style.display = "block";
+            resInfo.textContent = "Error: " + (typeof errMsg === 'object' ? JSON.stringify(errMsg) : errMsg);
+          } else {
+            alert("Error: " + errMsg);
+          }
+          return;
+        }
+
+        // Éxito, recargar
+        location.reload();
+      } catch (err) {
+        console.error("Fetch error:", err);
         if (resInfo) {
           resInfo.style.display = "block";
-          resInfo.textContent = "Error: " + text;
+          resInfo.textContent = "Error de conexión: " + err.message;
         } else {
-          alert("Error: " + text);
+          alert("Error de conexión");
         }
-        return;
       }
-
-      // Éxito, recargar para que el backend detecte el nuevo perfil
-      location.reload();
     }
 
     // Service worker (PWA)
@@ -285,10 +297,13 @@
     // Sincronizar info de sesión con LocalStorage (BRIDGE CRÍTICO)
     (function () {
       try {
-        const currentProfileId = "{{ user.profile_id if user and user.profile_id else '' }}";
-        console.log("DEBUG: Sincronizando Perfil ID:", currentProfileId);
-        if (currentProfileId) {
-          localStorage.setItem("me_profile_id", currentProfileId);
+        const profileId = "{{ user.profile_id if user and user.profile_id else '' }}";
+        if (profileId) {
+          localStorage.setItem("me_profile_id", profileId);
+          console.log("Sync Perfil:", profileId);
+        } else {
+          localStorage.removeItem("me_profile_id");
+          console.log("Sync Perfil: Limpiado");
         }
       } catch (e) { console.error("Error sync profile", e); }
     })();

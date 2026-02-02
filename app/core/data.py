@@ -3,6 +3,16 @@
 # Se usa para poblar los selects en frontend
 
 CATEGORIES = {
+    "Mercado de Segunda Mano (Venta)": [
+        "Inmobiliaria (Pisos/Locales)",
+        "Vehículos y Motor",
+        "Electrónica y Móviles",
+        "Moda y Accesorios",
+        "Hogar y Muebles",
+        "Deportes y Ocio",
+        "Coleccionismo",
+        "Otros Productos"
+    ],
     "Hogar y Mantenimiento": [
         "Electricidad",
         "Fontanería",
@@ -57,12 +67,6 @@ CATEGORIES = {
         "Traducción y textos",
         "Gestoría y trámites",
         "Otros"
-    ],
-    "Mercadillo y Segunda Mano": [
-        "Venta de cosas",
-        "Ropa y Accesorios",
-        "Muebles y Deco",
-        "Electrónica"
     ]
 }
 
@@ -72,3 +76,7 @@ def get_flattened_categories():
     for cat, subs in CATEGORIES.items():
         flat.extend(subs)
     return sorted(list(set(flat)))
+
+def get_sales_categories():
+    """Retorna la lista de categorías que se consideran 'Venta' (Mercado de Segunda Mano)"""
+    return CATEGORIES.get("Mercado de Segunda Mano (Venta)", [])

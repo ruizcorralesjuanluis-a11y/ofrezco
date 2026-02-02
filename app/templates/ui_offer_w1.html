@@ -37,6 +37,87 @@
       <span class="ios-label">Especialidad</span>
       <input id="wSpecialty" class="ios-input text-end" style="width:60%;" placeholder="Opcional" />
     </li>
+
+    <!-- BLOQUE INMOBILIARIA -->
+    <div id="blockRealEstate" style="display:none;">
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-top border-bottom">
+        <span class="ios-label">Habitaciones</span>
+        <input type="number" id="wRooms" class="ios-input text-end" style="width:60%;" placeholder="0" />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Metros (m²)</span>
+        <input type="number" id="wSqm" class="ios-input text-end" style="width:60%;" placeholder="0" />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Baños</span>
+        <input type="number" id="wBathrooms" class="ios-input text-end" style="width:60%;" placeholder="0" />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Planta</span>
+        <input type="number" id="wFloor" class="ios-input text-end" style="width:60%;" placeholder="0" />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Ascensor</span>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="wLift">
+        </div>
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Terraza</span>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="wTerrace">
+        </div>
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Aire Acond.</span>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="wAC">
+        </div>
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Garaje</span>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="wParking">
+        </div>
+      </li>
+    </div>
+    <!-- BLOQUE MOTOR -->
+    <div id="blockMotor" style="display:none;">
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-top border-bottom">
+        <span class="ios-label">Marca</span>
+        <input type="text" id="wCarBrand" class="ios-input text-end" style="width:60%;"
+          placeholder="Ej. Seat, BMW..." />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Modelo</span>
+        <input type="text" id="wCarModel" class="ios-input text-end" style="width:60%;"
+          placeholder="Ej. Ibiza, Serie 3..." />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Año</span>
+        <input type="number" id="wCarYear" class="ios-input text-end" style="width:60%;" placeholder="2020" />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Kilómetros</span>
+        <input type="number" id="wCarKm" class="ios-input text-end" style="width:60%;" placeholder="0" />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Combustible</span>
+        <select id="wCarFuel" class="ios-input text-end" style="width:60%; direction:rtl; background:transparent;">
+          <option value="Gasolina">Gasolina</option>
+          <option value="Diésel">Diésel</option>
+          <option value="Híbrido">Híbrido</option>
+          <option value="Eléctrico">Eléctrico</option>
+          <option value="Otros">Otros</option>
+        </select>
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Cambio Automático</span>
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="wCarTrans">
+        </div>
+      </li>
+    </div>
   </ul>
 </div>
 
@@ -64,6 +145,23 @@
     const category = catSelect.value.trim();
     const title = document.getElementById("wTitle").value.trim();
     const specialty = document.getElementById("wSpecialty").value.trim();
+    const rooms = document.getElementById("wRooms").value;
+    const sqm = document.getElementById("wSqm").value;
+    const bathrooms = document.getElementById("wBathrooms").value;
+
+    const floor = document.getElementById("wFloor").value;
+    const lift = document.getElementById("wLift").checked;
+    const terrace = document.getElementById("wTerrace").checked;
+    const ac = document.getElementById("wAC").checked;
+    const parking = document.getElementById("wParking").checked;
+
+    const carBrand = document.getElementById("wCarBrand").value.trim();
+    const carModel = document.getElementById("wCarModel").value.trim();
+    const carYear = document.getElementById("wCarYear").value;
+    const carKm = document.getElementById("wCarKm").value;
+    const carFuel = document.getElementById("wCarFuel").value;
+    const carTrans = document.getElementById("wCarTrans").checked;
+
     if (!category) { alert("Selecciona una categoría."); return; }
     if (title.length < 3) { alert("Escribe un título (mín. 3 caracteres)."); return; }
 
@@ -74,15 +172,47 @@
 
     // Guardamos también el tipo de oferta para usarlo en pasos siguientes
     const offerType = '{{ offer_type }}';
-    saveDraft({ category, category_group, title, specialty, offer_type: offerType });
+    saveDraft({
+      category, category_group, title, specialty, offer_type: offerType,
+      rooms, sqm, bathrooms,
+      floor, lift, terrace, ac, parking,
+      carBrand, carModel, carYear, carKm, carFuel, carTrans
+    });
 
     location.href = "/ui/offers/new/2";
   }
   (function init() {
     // Definimos el tipo de flujo actual (si existe)
     const offerType = '{{ offer_type }}';
-    const salesCategories = {{ sales_categories | tojson
+    const salesCategories = {{ sales_categories | tojson | safe
   }};
+
+  // Lógica de filtrado de categorías por URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const exclude = urlParams.get("exclude_cat");
+  const exclude2 = urlParams.get("exclude_cat2");
+  const fixed = urlParams.get("fixed_cat");
+  const catSelect = document.getElementById("wCategory");
+
+  if (exclude || exclude2 || fixed) {
+    Array.from(catSelect.options).forEach(opt => {
+      if (!opt.value) return;
+      if (exclude && opt.value === exclude) {
+        opt.remove();
+      }
+      if (exclude2 && opt.value === exclude2) {
+        opt.remove();
+      }
+      if (fixed && opt.value !== fixed) {
+        opt.remove();
+      }
+    });
+    // Si solo queda una opción real, seleccionarla automáticamente
+    const validOptions = Array.from(catSelect.options).filter(o => o.value);
+    if (validOptions.length === 1) {
+      catSelect.value = validOptions[0].value;
+    }
+  }
 
   // Cargar borrador
   let d = loadDraft();
@@ -131,25 +261,55 @@
   if (d.category) document.getElementById("wCategory").value = d.category;
   if (d.title) document.getElementById("wTitle").value = d.title;
   if (d.specialty) document.getElementById("wSpecialty").value = d.specialty;
+  if (d.rooms) document.getElementById("wRooms").value = d.rooms;
+  if (d.sqm) document.getElementById("wSqm").value = d.sqm;
+  if (d.bathrooms) document.getElementById("wBathrooms").value = d.bathrooms;
+  if (d.floor) document.getElementById("wFloor").value = d.floor;
+  if (d.lift) document.getElementById("wLift").checked = d.lift;
+  if (d.terrace) document.getElementById("wTerrace").checked = d.terrace;
+  if (d.ac) document.getElementById("wAC").checked = d.ac;
+  if (d.parking) document.getElementById("wParking").checked = d.parking;
+
+  if (d.carBrand) document.getElementById("wCarBrand").value = d.carBrand;
+  if (d.carModel) document.getElementById("wCarModel").value = d.carModel;
+  if (d.carYear) document.getElementById("wCarYear").value = d.carYear;
+  if (d.carKm) document.getElementById("wCarKm").value = d.carKm;
+  if (d.carFuel) document.getElementById("wCarFuel").value = d.carFuel;
+  if (d.carTrans) document.getElementById("wCarTrans").checked = d.carTrans;
 
   // Detectar cambio de categoría para ocultar/mostrar especialidad
   document.getElementById("wCategory").addEventListener("change", function () {
     const val = this.value;
-    const isVenta = salesCategories.includes(val);
+    const isInmob = val.includes("Inmobiliaria");
+    const isMotor = val.includes("Vehículos");
+    const blockRE = document.getElementById("blockRealEstate");
+    const blockMT = document.getElementById("blockMotor");
     const rowSpec = document.getElementById("rowSpecialty");
 
     // Si estamos en modo "sales" estricto, ocultamos siempre
     if (offerType === 'sales') {
       rowSpec.style.setProperty("display", "none", "important");
       document.getElementById("wSpecialty").value = "";
-      return;
+    } else {
+      const isCatVenta = salesCategories.includes(val);
+      if (isCatVenta) {
+        rowSpec.style.setProperty("display", "none", "important");
+        document.getElementById("wSpecialty").value = "";
+      } else {
+        rowSpec.style.display = "flex";
+      }
     }
 
-    if (isVenta) {
-      rowSpec.style.display = "none";
-      document.getElementById("wSpecialty").value = "";
+    if (isInmob) {
+      blockRE.style.display = "block";
     } else {
-      rowSpec.style.display = "flex";
+      blockRE.style.display = "none";
+    }
+
+    if (isMotor) {
+      blockMT.style.display = "block";
+    } else {
+      blockMT.style.display = "none";
     }
   });
 
@@ -157,6 +317,6 @@
   if (document.getElementById("wCategory").value) {
     document.getElementById("wCategory").dispatchEvent(new Event("change"));
   }
-  }) ();
+}) ();
 </script>
 {% endblock %}

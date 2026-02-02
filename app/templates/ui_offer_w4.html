@@ -12,15 +12,24 @@
 <div class="card-soft overflow-hidden p-0 mt-3">
   <div class="px-3 py-2 bg-light border-bottom small fw-bold text-uppercase muted"
     style="letter-spacing:1px; font-size:11px;">
-    PASO 4 · VÍDEO Y REVISIÓN
+    PASO 4 · PORTADA Y VÍDEO
   </div>
 
   <div class="p-4 text-center border-bottom bg-white">
-    <p class="muted small mb-3">Graba un vídeo corto (max 30s) presentándote. Aumenta mucho tus posibilidades.</p>
+    <p class="muted small mb-3">1. Primero, haz una <b>foto de portada</b> para el anuncio.</p>
+    <label class="btn btn-outline-secondary pill d-inline-flex align-items-center gap-2 mb-3">
+      📸 Hacer / Subir Foto
+      <input id="wPhoto" type="file" accept="image/*" style="display:none"
+        onchange="document.getElementById('photoLabel').textContent = this.files[0]?.name || 'Foto seleccionada';" />
+    </label>
+    <div id="photoLabel" class="small mb-4 text-secondary fw-bold"></div>
 
+    <hr class="my-4">
+
+    <p class="muted small mb-3">2. Ahora, graba un <b id="videoInfoLabel">vídeo corto (max 15s)</b> presentándote.</p>
     <label class="btn btn-outline-primary pill d-inline-flex align-items-center gap-2">
       📹 Grabar / Subir Vídeo
-      <input id="wVideo" type="file" accept="video/*" capture="environment" style="display:none"
+      <input id="wVideo" type="file" accept="video/*" style="display:none"
         onchange="document.getElementById('videoLabel').textContent = this.files[0]?.name || 'Vídeo seleccionado';" />
     </label>
     <div id="videoLabel" class="small mt-2 text-primary fw-bold"></div>
@@ -70,102 +79,155 @@
     if (d.service_radius_km) lines.push(`<b>Radio:</b> ${d.service_radius_km} km`);
     lines.push(`<b>Disponible ahora:</b> ${d.available_now ? "Sí" : "No"}`);
     if (d.price != null) lines.push(`<b>Precio:</b> ${d.price} €`);
+    if (d.rooms) lines.push(`<b>Habitaciones:</b> ${d.rooms}`);
+    if (d.sqm) lines.push(`<b>Metros:</b> ${d.sqm} m²`);
+    if (d.bathrooms) lines.push(`<b>Baños:</b> ${d.bathrooms}`);
+    if (d.floor) lines.push(`<b>Planta:</b> ${d.floor}`);
+    if (d.lift) lines.push(`<b>Ascensor:</b> Sí`);
+    if (d.terrace) lines.push(`<b>Terraza:</b> Sí`);
+    if (d.ac) lines.push(`<b>Aire Acond.:</b> Sí`);
+    if (d.parking) lines.push(`<b>Garaje:</b> Sí`);
+
+    if (d.carBrand) lines.push(`<b>Marca:</b> ${d.carBrand}`);
+    if (d.carModel) lines.push(`<b>Modelo:</b> ${d.carModel}`);
+    if (d.carYear) lines.push(`<b>Año:</b> ${d.carYear}`);
+    if (d.carKm) lines.push(`<b>KM:</b> ${d.carKm}`);
+    if (d.carFuel) lines.push(`<b>Combustible:</b> ${d.carFuel}`);
+    if (d.carTrans) lines.push(`<b>Cambio:</b> Automático`);
+
     s.innerHTML = lines.join("<br>");
   }
   async function publish() {
     const profileId = localStorage.getItem("me_profile_id");
-    if (!profileId) { alert("Selecciona o crea un Perfil en “Cuenta” primero."); return; }
+    const profileIdInt = parseInt(profileId);
+    if (!profileId || isNaN(profileIdInt)) {
+      alert("No se encontró un perfil válido. Por favor, ve a Cuenta y selecciona tu perfil.");
+      console.log("Profile ID in localStorage:", profileId);
+      return;
+    }
 
     const d = loadDraft();
-    // 1) Crear oferta O producto
-    let isProduct = false;
-    if (d.category_group && (d.category_group.includes("Mercadillo") || d.category_group.includes("Venta"))) {
-      isProduct = true;
+    if (!d.category || !d.title) { alert("Faltan datos del paso 1."); return; }
+
+    // VALIDACIÓN ESPECIAL: Si es Venta, el video es OBLIGATORIO
+    const isVenta = (d.category || "").includes("Venta") || (d.category || "").includes("Mercado");
+    const videoFile = document.getElementById("wVideo").files[0];
+
+    if (isVenta && !videoFile) {
+      alert("⚠️ OBLIGATORIO: Para vender productos, debes subir un vídeo demostrativo.");
+      return;
     }
 
-    let payload, endpoint;
+    // 1) Crear oferta DRAFT
+    const payload = {
+      profile_id: profileIdInt,
+      offer_kind: "SERVICE",
+      category: d.category,
+      title: d.title,
+      description: (d.description || "").trim() || null,
+      price: (d.price == null || d.price === "" ? null : Number(d.price)),
+      currency: "EUR",
+      available_now: !!d.available_now,
+      allergens: d.specialty ? String(d.specialty) : null,
+      extra_info: (d.rooms || d.sqm || d.bathrooms || d.floor || d.lift || d.terrace || d.ac || d.parking || d.carBrand || d.carModel || d.carYear || d.carKm || d.carFuel || d.carTrans) ? {
+        rooms: d.rooms || null,
+        sqm: d.sqm || null,
+        bathrooms: d.bathrooms || null,
+        floor: d.floor || null,
+        lift: !!d.lift,
+        terrace: !!d.terrace,
+        ac: !!d.ac,
+        parking: !!d.parking,
+        car_brand: d.carBrand || null,
+        car_model: d.carModel || null,
+        car_year: d.carYear || null,
+        car_km: d.carKm || null,
+        car_fuel: d.carFuel || null,
+        car_trans: !!d.carTrans
+      } : null
+    };
 
-    if (isProduct) {
-      endpoint = "/api/v1/products";
-      payload = {
-        profile_id: Number(profileId),
-        category: d.category,
-        title: d.title,
-        description: (d.description || "").trim() || null,
-        price: (d.price == null ? null : Number(d.price)),
-        currency: "EUR"
-      };
-    } else {
-      endpoint = "/api/v1/offers";
-      payload = {
-        profile_id: Number(profileId),
-        offer_kind: "SERVICE",
-        category: d.category,
-        title: d.title,
-        description: (d.description || "").trim() || null,
-        price: (d.price == null ? null : Number(d.price)),
-        currency: "EUR",
-        available_now: !!d.available_now,
-        allergens: d.specialty ? String(d.specialty) : null
-      };
-    }
+    console.log("Publishing payload:", payload);
 
-    let item;
+    let offer;
     try {
-      const r = await fetch(endpoint, {
+      const r = await fetch("/api/v1/offers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
       const j = await r.json();
-      if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
-      item = j;
+      if (!r.ok) {
+        console.error("Server error detail:", j);
+        // Si es un error de validación de Pydantic, j.detail suele ser una lista
+        const msg = (typeof j.detail === 'string') ? j.detail : JSON.stringify(j.detail);
+        throw new Error(msg || ("HTTP " + r.status));
+      }
+      offer = j;
     } catch (e) {
-      alert("Error creando: " + e.message);
+      alert("Error creando oferta: " + e.message);
       return;
     }
 
-    // 2) Subir vídeo (OBLIGATORIO para ambos ahora)
-    const f = document.getElementById("wVideo").files[0];
-    if (f) {
+    // 2) Subir foto si existe
+    const photoFile = document.getElementById("wPhoto").files[0];
+    if (photoFile) {
       try {
         const fd = new FormData();
-        fd.append("file", f);
-        // Endpoint video dinámico
-        const vidEndpoint = isProduct ? `/api/v1/products/${item.id}/video` : `/api/v1/offers/${item.id}/video`;
-
-        const r2 = await fetch(vidEndpoint, { method: "POST", body: fd });
-        const j2 = await r2.json();
-        if (!r2.ok) throw new Error(j2.detail || ("HTTP " + r2.status));
-        item = j2;
+        fd.append("file", photoFile);
+        const rPhoto = await fetch(`/api/v1/offers/${offer.id}/photo`, { method: "POST", body: fd });
+        if (!rPhoto.ok) {
+          const jP = await rPhoto.json();
+          throw new Error(jP.detail || "Error subiendo foto");
+        }
       } catch (e) {
-        alert("Creado, pero el vídeo falló: " + e.message);
-        return;
+        alert("Oferta creada, pero la foto falló: " + e.message);
       }
-    } else {
-      // Fallará en el submit si no hay video
     }
 
-    // 3) Enviar a revisión / Publicar
+    // 3) Subir vídeo si existe
+    const videoFileActual = document.getElementById("wVideo").files[0];
+    if (videoFileActual) {
+      try {
+        const fd = new FormData();
+        fd.append("file", videoFileActual);
+        const r2 = await fetch(`/api/v1/offers/${offer.id}/video`, { method: "POST", body: fd });
+        if (!r2.ok) {
+          const j2 = await r2.json();
+          throw new Error(j2.detail || "Error subiendo vídeo");
+        }
+      } catch (e) {
+        alert("Oferta creada, pero el vídeo falló: " + e.message);
+        return;
+      }
+    }
+
+    // 4) Enviar a revisión
     try {
-      const subEndpoint = isProduct ? `/api/v1/products/${item.id}/submit` : `/api/v1/offers/${item.id}/submit`;
-      const r3 = await fetch(subEndpoint, { method: "POST" });
+      const r3 = await fetch(`/api/v1/offers/${offer.id}/submit`, { method: "POST" });
       const j3 = await r3.json();
       if (!r3.ok) throw new Error(j3.detail || ("HTTP " + r3.status));
 
       localStorage.removeItem(wDraftKey());
-      alert("¡Publicado con éxito!");
+      alert("¡Oferta publicada con éxito!");
       location.href = "/ui/offers";
     } catch (e) {
-      alert("Creado, pero error al publicar: " + e.message);
+      alert("Oferta creada, pero no se pudo publicar: " + e.message);
     }
   }
 
   (function init() {
-    // label perfil activo 
+    // label perfil activo (base.html ya lo rellena, pero por si acaso)
     const pid = localStorage.getItem("me_profile_id");
     const el = document.getElementById("activeProfileLabel");
-    if (pid) el.textContent = "#" + pid;
+    if (pid && el) el.textContent = "#" + pid;
+
+    const d = loadDraft();
+    const vLabel = document.getElementById("videoInfoLabel");
+    if (d.category && d.category.includes("Inmobiliaria")) {
+      vLabel.innerHTML = "vídeo detallado (max 3 min)";
+    }
+
     renderSummary();
   })();
 </script>
