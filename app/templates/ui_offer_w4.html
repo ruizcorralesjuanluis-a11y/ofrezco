@@ -138,7 +138,8 @@
       currency: "EUR",
       available_now: !!d.available_now,
       allergens: d.specialty ? String(d.specialty) : null,
-      extra_info: (d.rooms || d.sqm || d.bathrooms || d.floor || d.lift || d.terrace || d.ac || d.parking || d.carBrand || d.carModel || d.carYear || d.carKm || d.carCC || d.carHp || d.carFuel || d.carTrans || d.operationType) ? {
+      extra_info: (d.rooms || d.sqm || d.bathrooms || d.floor || d.lift || d.terrace || d.ac || d.parking || d.carBrand || d.carModel || d.carYear || d.carKm || d.carCC || d.carHp || d.carFuel || d.carTrans || d.operationType || d.zone_text) ? {
+        zone_text: d.zone_text || null,
         operation_type: d.operationType || "Venta",
         rooms: d.rooms || null,
         sqm: d.sqm || null,

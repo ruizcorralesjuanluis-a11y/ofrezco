@@ -88,6 +88,9 @@ def ui_results(
     op: str = "",           # Real Estate: Alquiler / Venta
     rooms: str = "",        # Real Estate: Mínimo habitaciones
     sqm: str = "",          # Real Estate: Mínimo m2
+    min_price: str = "",    # Filtro precio mín
+    max_price: str = "",    # Filtro precio máx
+    zone: str = "",         # Filtro zona (texto)
     db: Session = Depends(get_db)  # Inyección de DB
 ):
     sales_cats = get_sales_categories()
@@ -121,6 +124,9 @@ def ui_results(
             query = query.where(Offer.extra_info["rooms"].as_integer() >= int(rooms))
         if sqm:
             query = query.where(Offer.extra_info["sqm"].as_integer() >= int(sqm))
+        if zone:
+            # Búsqueda parcial de texto en la zona
+            query = query.where(Offer.extra_info["zone_text"].as_string().ilike(f"%{zone}%"))
 
     elif cat == "Vehículos y Motor":
         query = query.where(Offer.category == "Vehículos y Motor")
@@ -138,6 +144,12 @@ def ui_results(
     
     if q:
         query = query.where(Offer.title.contains(q))
+
+    # Filtros de precio (globales para cualquier categoría)
+    if min_price:
+        query = query.where(Offer.price >= float(min_price))
+    if max_price:
+        query = query.where(Offer.price <= float(max_price))
 
     items = db.execute(query).scalars().all()
     results = []
@@ -175,7 +187,8 @@ def ui_results(
             "flat_categories": get_flattened_categories(),
             "q": q, "cat": cat,
             "view_mode": view_mode,
-            "op": op, "rooms": rooms, "sqm": sqm
+            "op": op, "rooms": rooms, "sqm": sqm,
+            "min_price": min_price, "max_price": max_price, "zone": zone
         },
     )
 
