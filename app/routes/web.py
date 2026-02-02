@@ -148,6 +148,7 @@ def ui_results(
             "distance_km": 1.2,
             "status": "Disponible" if o.available_now else "Consultar",
             "desc": o.description or "",
+            "phone": prof.phone or "",
             "extra": o.extra_info or {}
         })
 
@@ -209,6 +210,7 @@ def ui_feed(
             "video": o.video_path or "",
             "photo": o.photo_path or "https://via.placeholder.com/56", 
             "desc": o.description or "",
+            "phone": prof.phone or "",
             "extra": o.extra_info or {}
         })
 
@@ -247,7 +249,8 @@ def ui_profile(request: Request, profile_id: int, db: Session = Depends(get_db))
         "available": prof.available_now,
         "user_name": user_owner.name if user_owner else "Usuario",
         "user_photo": prof.photo if prof.photo else "https://via.placeholder.com/80", # Ahora leemos de la DB
-        "photo": prof.photo # Raw photo path
+        "photo": prof.photo, # Raw photo path
+        "phone": prof.phone or ""
     }
 
     return templates.TemplateResponse(

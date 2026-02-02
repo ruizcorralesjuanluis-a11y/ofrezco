@@ -213,7 +213,8 @@
 
         <div class="feed-actions">
             <button class="action-btn" onclick="shareItem('{{ item.id }}')">🔗</button>
-            <a href="/ui/profile/{{ item.id }}" class="action-btn text-decoration-none">💬</a>
+            <a href="https://wa.me/{{ item.phone }}?text=Hola,%20he%20visto%20tu%20anuncio%20de%20{{ item.title | urlencode }}%20en%20Ofrezco"
+                class="action-btn text-decoration-none" target="_blank">💬</a>
         </div>
     </div>
     {% else %}

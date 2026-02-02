@@ -155,9 +155,10 @@
     ✏️ Editar mi perfil
   </a>
   {% else %}
-  <button class="btn btn-dark w-100 pill py-3 fw-bold" onclick="alert('Funcionalidad de chat próximamente 💬')">
+  <a class="btn btn-dark w-100 pill py-3 fw-bold"
+    href="https://wa.me/{{ p.phone }}?text=Hola,%20he%20visto%20tu%20perfil%20en%20Ofrezco" target="_blank">
     Contactar con {{ p.user_name }}
-  </button>
+  </a>
   {% endif %}
 </div>
 
