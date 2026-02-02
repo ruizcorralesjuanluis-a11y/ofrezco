@@ -104,6 +104,14 @@
         <input type="number" id="wCarKm" class="ios-input text-end" style="width:60%;" placeholder="0" />
       </li>
       <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Cilindrada (cc)</span>
+        <input type="number" id="wCarCC" class="ios-input text-end" style="width:60%;" placeholder="1600" />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
+        <span class="ios-label">Potencia (CV)</span>
+        <input type="number" id="wCarHp" class="ios-input text-end" style="width:60%;" placeholder="110" />
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
         <span class="ios-label">Combustible</span>
         <select id="wCarFuel" class="ios-input text-end" style="width:60%; direction:rtl; background:transparent;">
           <option value="Gasolina">Gasolina</option>
@@ -161,6 +169,8 @@
     const carModel = document.getElementById("wCarModel").value.trim();
     const carYear = document.getElementById("wCarYear").value;
     const carKm = document.getElementById("wCarKm").value;
+    const carCC = document.getElementById("wCarCC").value;
+    const carHp = document.getElementById("wCarHp").value;
     const carFuel = document.getElementById("wCarFuel").value;
     const carTrans = document.getElementById("wCarTrans").checked;
 
@@ -178,7 +188,7 @@
       category, category_group, title, specialty, offer_type: offerType,
       rooms, sqm, bathrooms,
       floor, lift, terrace, ac, parking,
-      carBrand, carModel, carYear, carKm, carFuel, carTrans
+      carBrand, carModel, carYear, carKm, carCC, carHp, carFuel, carTrans
     });
 
     location.href = "/ui/offers/new/2";
@@ -298,43 +308,61 @@
   }
 
   const carData = {
-    "SEAT": ["Arona", "Ibiza", "Leon", "Ateca", "Tarraco", "Alhambra"],
-    "Renault": ["Clio", "Captur", "Megane", "Austral", "Arkana", "Zoe"],
-    "Peugeot": ["208", "2008", "308", "3008", "508", "5008"],
-    "Volkswagen": ["Golf", "Polo", "T-Roc", "Tiguan", "Passat", "ID.3", "ID.4"],
-    "Toyota": ["Corolla", "Yaris", "C-HR", "RAV4", "Hilux", "Land Cruiser"],
-    "BMW": ["Serie 1", "Serie 2", "Serie 3", "Serie 4", "Serie 5", "X1", "X3", "X5"],
-    "Mercedes-Benz": ["Clase A", "Clase B", "Clase C", "Clase E", "GLA", "GLC", "GLE"],
-    "Audi": ["A1", "A3", "A4", "A5", "A6", "Q2", "Q3", "Q5"],
-    "Ford": ["Fiesta", "Focus", "Kuga", "Puma", "Mustang", "Custom"],
-    "Citroën": ["C3", "C4", "C5 Aircross", "Berlingo"],
-    "Hyundai": ["i10", "i20", "i30", "Tucson", "Kona", "Ioniq"],
-    "Kia": ["Picanto", "Rio", "Ceed", "Sportage", "Niro", "EV6"],
-    "Dacia": ["Sandero", "Duster", "Jogger", "Spring"],
-    "Fiat": ["500", "Panda", "Tipo", "Ducato"],
-    "Opel": ["Corsa", "Astra", "Mokka", "Grandland"],
-    "Nissan": ["Micra", "Juke", "Qashqai", "X-Trail", "Leaf"],
-    "Volvo": ["XC40", "XC60", "XC90", "V40", "S60"],
-    "Tesla": ["Model 3", "Model Y", "Model S", "Model X"],
-    "Porsche": ["911", "Cayenne", "Macan", "Taycan", "Panamera"],
-    "Jeep": ["Renegade", "Compass", "Wrangler", "Cherokee"],
-    "Mini": ["Hatch", "Countryman", "Clubman"],
-    "Land Rover": ["Evoque", "Velar", "Defender", "Discovery"],
-    "Lexus": ["UX", "NX", "RX", "ES"],
-    "Mazda": ["Mazda2", "Mazda3", "CX-30", "CX-5", "MX-5"],
-    "Skoda": ["Fabia", "Octavia", "Superb", "Kamiq", "Karoq", "Kodiaq"],
-    "Alfa Romeo": ["Giulia", "Stelvio", "Tonale"],
-    "Cupra": ["Formentor", "Leon", "Born", "Ateca"],
-    "Honda": ["Civic", "HR-V", "CR-V", "Jazz"],
-    "Suzuki": ["Swift", "Vitara", "Ignis", "Jimny"],
-    "Mitsubishi": ["ASX", "Eclipse Cross", "Outlander", "L200"]
+    "SEAT": ["Arona", "Ibiza", "Leon", "Ateca", "Tarraco", "Alhambra", "Otros"],
+    "Renault": ["Clio", "Captur", "Megane", "Austral", "Arkana", "Zoe", "Otros"],
+    "Peugeot": ["208", "2008", "308", "3008", "508", "5008", "Otros"],
+    "Volkswagen": ["Golf", "Polo", "T-Roc", "Tiguan", "Passat", "ID.3", "ID.4", "Otros"],
+    "Toyota": ["Corolla", "Yaris", "C-HR", "RAV4", "Hilux", "Land Cruiser", "Otros"],
+    "BMW": ["Serie 1", "Serie 2", "Serie 3", "Serie 4", "Serie 5", "X1", "X3", "X5", "Otros"],
+    "Mercedes-Benz": ["Clase A", "Clase B", "Clase C", "Clase E", "GLA", "GLC", "GLE", "Otros"],
+    "Audi": ["A1", "A3", "A4", "A5", "A6", "Q2", "Q3", "Q5", "Otros"],
+    "Ford": ["Fiesta", "Focus", "Kuga", "Puma", "Mustang", "Custom", "Otros"],
+    "Citroën": ["C3", "C4", "C5 Aircross", "Berlingo", "Otros"],
+    "Hyundai": ["i10", "i20", "i30", "Tucson", "Kona", "Ioniq", "Otros"],
+    "Kia": ["Picanto", "Rio", "Ceed", "Sportage", "Niro", "EV6", "Otros"],
+    "Dacia": ["Sandero", "Duster", "Jogger", "Spring", "Otros"],
+    "Fiat": ["500", "Panda", "Tipo", "Ducato", "Otros"],
+    "Opel": ["Corsa", "Astra", "Mokka", "Grandland", "Otros"],
+    "Nissan": ["Micra", "Juke", "Qashqai", "X-Trail", "Leaf", "Otros"],
+    "Volvo": ["XC40", "XC60", "XC90", "V40", "S60", "Otros"],
+    "Tesla": ["Model 3", "Model Y", "Model S", "Model X", "Otros"],
+    "Porsche": ["911", "Cayenne", "Macan", "Taycan", "Panamera", "Otros"],
+    "Jeep": ["Renegade", "Compass", "Wrangler", "Cherokee", "Otros"],
+    "Mini": ["Hatch", "Countryman", "Clubman", "Otros"],
+    "Land Rover": ["Evoque", "Velar", "Defender", "Discovery", "Otros"],
+    "Lexus": ["UX", "NX", "RX", "ES", "Otros"],
+    "Mazda": ["Mazda2", "Mazda3", "CX-30", "CX-5", "MX-5", "Otros"],
+    "Skoda": ["Fabia", "Octavia", "Superb", "Kamiq", "Karoq", "Kodiaq", "Otros"],
+    "Alfa Romeo": ["Giulia", "Stelvio", "Tonale", "Otros"],
+    "Cupra": ["Formentor", "Leon", "Born", "Ateca", "Otros"],
+    "Honda": ["Civic", "HR-V", "CR-V", "Jazz", "Otros"],
+    "Suzuki": ["Swift", "Vitara", "Ignis", "Jimny", "Otros"],
+    "Mitsubishi": ["ASX", "Eclipse Cross", "Outlander", "L200", "Otros"],
+    "MG": ["ZS", "HS", "MG4", "MG5", "Marvel R", "Otros"],
+    "BYD": ["Atto 3", "Han", "Tang", "Dolphin", "Otros"],
+    "Jaguar": ["XE", "XF", "E-Pace", "F-Pace", "I-Pace", "F-Type", "Otros"],
+    "Subaru": ["Impreza", "XV", "Forester", "Outback", "Solterra", "Otros"],
+    "Smart": ["Fortwo", "Forfour", "#1", "#3", "Otros"],
+    "DS": ["DS 3", "DS 4", "DS 7", "DS 9", "Otros"],
+    "Maserati": ["Ghibli", "Levante", "Quattroporte", "Grecale", "Otros"],
+    "Ferrari": ["296 GTB", "SF90 Stradale", "Roma", "F8", "Purosangue", "Otros"],
+    "Lamborghini": ["Urus", "Huracán", "Revuelto", "Otros"],
+    "Aston Martin": ["Vantage", "DB11", "DBS", "DBX", "Otros"],
+    "SsangYong / KGM": ["Tivoli", "Korando", "Rexton", "Torres", "Otros"],
+    "Lynk & Co": ["01", "Otros"],
+    "Polestar": ["2", "3", "Otros"],
+    "Otros": ["Otros"]
   };
 
   const brandSelect = document.getElementById("wCarBrand");
   const modelSelect = document.getElementById("wCarModel");
 
   // Poblar Marcas
-  Object.keys(carData).sort().forEach(brand => {
+  Object.keys(carData).sort((a, b) => {
+    if (a === "Otros") return 1;
+    if (b === "Otros") return -1;
+    return a.localeCompare(b);
+  }).forEach(brand => {
     const opt = document.createElement("option");
     opt.value = brand;
     opt.textContent = brand;
@@ -343,7 +371,7 @@
 
   // Manejar cambio de marca
   brandSelect.addEventListener("change", function () {
-    const models = carData[this.value] || [];
+    const models = carData[this.value] || ["Otros"];
     modelSelect.innerHTML = '<option value="">Seleccionar...</option>';
     models.forEach(m => {
       const opt = document.createElement("option");
@@ -373,6 +401,8 @@
   }
   if (d.carYear) document.getElementById("wCarYear").value = d.carYear;
   if (d.carKm) document.getElementById("wCarKm").value = d.carKm;
+  if (d.carCC) document.getElementById("wCarCC").value = d.carCC;
+  if (d.carHp) document.getElementById("wCarHp").value = d.carHp;
   if (d.carFuel) document.getElementById("wCarFuel").value = d.carFuel;
   if (d.carTrans) document.getElementById("wCarTrans").checked = d.carTrans;
 

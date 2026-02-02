@@ -139,7 +139,7 @@
 
     <div class="offer-body">
       {% if o.price %}
-      <div class="offer-price">{{ o.price }} €</div>
+      <div class="offer-price">{{ o.price | format_price }} €</div>
       {% endif %}
       <div class="offer-title">{{ o.title }}</div>
       <div class="text-secondary small mb-2">{{ o.description }}</div>

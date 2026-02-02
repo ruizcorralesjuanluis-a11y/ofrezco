@@ -186,8 +186,22 @@
 
         <div class="feed-overlay">
             <div class="feed-info">
-                <div class="feed-price">{{ item.price }} €</div>
+                <div class="feed-price">{{ item.price | format_price }} €</div>
                 <div class="feed-title">{{ item.title }}</div>
+
+                {% if item.extra and (item.extra.car_brand or item.extra.car_km) %}
+                <div class="mb-2 d-flex flex-wrap gap-1" style="font-size: 0.8rem; opacity: 0.9;">
+                    {% if item.extra.car_year %}<span class="badge bg-light text-dark">{{ item.extra.car_year
+                        }}</span>{% endif %}
+                    {% if item.extra.car_km %}<span class="badge bg-light text-dark">{{ item.extra.car_km }} km</span>{%
+                    endif %}
+                    {% if item.extra.car_cc %}<span class="badge bg-light text-dark">{{ item.extra.car_cc }} cc</span>{%
+                    endif %}
+                    {% if item.extra.car_hp %}<span class="badge bg-light text-dark">{{ item.extra.car_hp }} CV</span>{%
+                    endif %}
+                </div>
+                {% endif %}
+
                 <div class="feed-desc">{{ item.desc }}</div>
 
                 <a href="/ui/profile/{{ item.id }}" class="feed-profile-link">

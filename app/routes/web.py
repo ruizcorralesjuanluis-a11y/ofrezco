@@ -13,6 +13,17 @@ from app.core.data import CATEGORIES, get_flattened_categories, get_sales_catego
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
+def format_price(value):
+    try:
+        # Convertir a entero para quitar el .0
+        num = int(float(value)) if value else 0
+        # Formatear con puntos para miles (estilo ES)
+        return "{:,}".format(num).replace(",", ".")
+    except:
+        return value
+
+templates.env.filters["format_price"] = format_price
+
 def get_user_context(request: Request):
     return {
         "id": request.session.get("user_id"),
@@ -136,7 +147,8 @@ def ui_results(
             "photo": o.photo_path or "https://via.placeholder.com/56", 
             "distance_km": 1.2,
             "status": "Disponible" if o.available_now else "Consultar",
-            "desc": o.description or ""
+            "desc": o.description or "",
+            "extra": o.extra_info or {}
         })
 
     return templates.TemplateResponse(
@@ -196,7 +208,8 @@ def ui_feed(
             "price": o.price or 0,
             "video": o.video_path or "",
             "photo": o.photo_path or "https://via.placeholder.com/56", 
-            "desc": o.description or ""
+            "desc": o.description or "",
+            "extra": o.extra_info or {}
         })
 
     return templates.TemplateResponse(
