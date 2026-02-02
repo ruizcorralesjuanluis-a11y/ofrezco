@@ -24,6 +24,9 @@ VERSION = "V5-FULL-RECOVERY-2026-02-01"
 def ping():
     return {"status": "ok", "version": VERSION, "msg": "Si ves esto, el servidor esta VIVO"}
 
+print(f"--- INICIANDO {app.title} ({VERSION}) ---")
+print(f"--- PATH ACTUAL: {os.getcwd()} ---")
+
 # --- FALLBACK PARA ERRORES DE IMPORTACIÓN O ARRANQUE ---
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

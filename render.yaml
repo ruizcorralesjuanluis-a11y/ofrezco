@@ -5,7 +5,7 @@ services:
     region: oregon 
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -k uvicorn.workers.UvicornWorker app.main:app
+    startCommand: gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT app.main:app
     envVars:
       - key: SECRET_KEY
         generateValue: true
