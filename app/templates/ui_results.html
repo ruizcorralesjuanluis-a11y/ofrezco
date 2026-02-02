@@ -96,7 +96,7 @@
   <div class="row g-2">
     {% for p in results %}
     <div class="col-6">
-      <a href="/ui/profile/{{ p.id }}" class="text-decoration-none text-dark">
+      <a href="/ui/feed?cat={{cat}}&q={{q}}&start_id={{p.id}}" class="text-decoration-none text-dark">
         <div class="card h-100 border-0 shadow-sm" style="border-radius:12px; overflow:hidden;">
           <!-- Video/Foto Preview -->
           <div class="bg-dark d-flex align-items-center justify-content-center"

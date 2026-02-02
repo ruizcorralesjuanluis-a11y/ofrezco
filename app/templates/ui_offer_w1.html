@@ -195,18 +195,37 @@
   const catSelect = document.getElementById("wCategory");
 
   if (exclude || exclude2 || fixed) {
-    Array.from(catSelect.options).forEach(opt => {
+    const options = Array.from(catSelect.options);
+    options.forEach(opt => {
       if (!opt.value) return;
-      if (exclude && opt.value === exclude) {
-        opt.remove();
+
+      const parentGroup = opt.parentElement;
+      const groupLabel = (parentGroup.tagName === 'OPTGROUP') ? parentGroup.label : "";
+
+      let shouldRemove = false;
+
+      if (exclude && (opt.value === exclude || groupLabel === exclude)) {
+        shouldRemove = true;
       }
-      if (exclude2 && opt.value === exclude2) {
-        opt.remove();
+      if (exclude2 && (opt.value === exclude2 || groupLabel === exclude2)) {
+        shouldRemove = true;
       }
-      if (fixed && opt.value !== fixed) {
+
+      // Si hay un fixed, se queda si coincide con el valor O con la etiqueta del grupo
+      if (fixed && (opt.value !== fixed && groupLabel !== fixed)) {
+        shouldRemove = true;
+      }
+
+      if (shouldRemove) {
         opt.remove();
       }
     });
+
+    // Limpiar optgroups vacíos
+    Array.from(catSelect.querySelectorAll('optgroup')).forEach(og => {
+      if (og.children.length === 0) og.remove();
+    });
+
     // Si solo queda una opción real, seleccionarla automáticamente
     const validOptions = Array.from(catSelect.options).filter(o => o.value);
     if (validOptions.length === 1) {

@@ -154,6 +154,60 @@ def ui_results(
         },
     )
 
+@router.get("/ui/feed", response_class=HTMLResponse)
+def ui_feed(
+    request: Request,
+    cat: str = "",
+    q: str = "",
+    start_id: int = None,
+    db: Session = Depends(get_db)
+):
+    from app.core.data import get_sales_categories
+    sales_cats = get_sales_categories()
+
+    query = select(Offer).where(Offer.status == "PUBLISHED").order_by(Offer.id.desc())
+    
+    # Filtrado similar a ui_results pero enfocado a productos/motor/inmo
+    if cat == "Inmobiliaria (Pisos/Locales)":
+        query = query.where(Offer.category == "Inmobiliaria (Pisos/Locales)")
+    elif cat == "Vehículos y Motor":
+        query = query.where(Offer.category == "Vehículos y Motor")
+    elif cat == "Mercado de Segunda Mano (Venta)":
+        query = query.where(Offer.category.in_(sales_cats))
+        query = query.where(Offer.category.notin_(["Inmobiliaria (Pisos/Locales)", "Vehículos y Motor"]))
+    elif cat:
+         query = query.where(Offer.category == cat)
+    
+    if q:
+        query = query.where(Offer.title.contains(q))
+
+    items = db.execute(query).scalars().all()
+    results = []
+
+    for o in items:
+        prof = db.get(Profile, o.profile_id)
+        u = db.get(User, prof.user_id) if prof else None
+        
+        results.append({
+            "id": o.profile_id,
+            "title": o.title,
+            "name": u.name if u else "Usuario",
+            "category": o.category,
+            "price": o.price or 0,
+            "video": o.video_path or "",
+            "photo": o.photo_path or "https://via.placeholder.com/56", 
+            "desc": o.description or ""
+        })
+
+    return templates.TemplateResponse(
+        "ui_item_feed.html",
+        {
+            "request": request,
+            "items": results,
+            "back_url": f"/ui/results?cat={cat}&q={q}" if cat or q else "/ui"
+        }
+    )
+
 
 # -------------------------
 # PERFIL
