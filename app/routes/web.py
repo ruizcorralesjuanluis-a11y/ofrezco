@@ -81,7 +81,20 @@ def ui_results(
     
     # 1. Determinar si es búsqueda de productos (Mercadillo)
     is_product_search = False
-    if cat in ["Mercadillo y Segunda Mano", "Venta de cosas", "Ropa y Accesorios", "Muebles y Deco", "Electrónica"]:
+    product_cats = [
+        "Mercadillo y Segunda Mano", 
+        "Mercado de Segunda Mano (Venta)",
+        "Venta de cosas", 
+        "Ropa y Accesorios", 
+        "Muebles y Deco", 
+        "Electrónica",
+        "Electrónica y Móviles",
+        "Hogar y Muebles",
+        "Moda y Accesorios",
+        "Inmobiliaria (Pisos/Locales)",
+        "Vehículos y Motor"
+    ]
+    if cat in product_cats:
         is_product_search = True
         view_mode = "mosaic"
 
@@ -143,7 +156,7 @@ def ui_results(
             "request": request,
             "title": "Ofrezco · Resultados",
             "page_title": "Resultados",
-            "back_url": "/ui/need/new",
+            "back_url": "/ui",
 
             "results": results, 
             "flat_categories": get_flattened_categories(),
@@ -239,6 +252,7 @@ def ui_offer_new(request: Request, type: str = ""):
             "user": get_user_context(request),
             "categories": filtered_cats,
             "sales_categories": get_sales_categories(),
+            "back_url": "/ui",
             "offer_type": type,
         },
     )
@@ -256,7 +270,7 @@ def ui_offer_w1(request: Request):
         "request": request, 
         "title": "Nueva oferta (1/4)", 
         "page_title": "Paso 1: Info Básica",
-        "back_url": "/ui/offers/new",
+        "back_url": "/ui",
         "user": get_user_context(request),
         "categories": CATEGORIES,
         "sales_categories": get_sales_categories(),
