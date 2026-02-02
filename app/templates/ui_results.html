@@ -104,9 +104,11 @@
             {% if p.video %}
             <video src="{{ p.video }}" class="w-100 h-100" style="object-fit:cover;" muted loop
               onmouseover="this.play()" onmouseout="this.pause()"></video>
+            {% elif p.photo %}
+            <img src="{{ p.photo }}" class="w-100 h-100" style="object-fit:cover;">
             {% else %}
             <!-- Placeholder sin foto -->
-            <span style="color:white; font-size:10px;">Sin vídeo</span>
+            <span style="color:white; font-size:10px;">Sin vídeo/foto</span>
             {% endif %}
 
             <div class="badge bg-success text-white position-absolute top-0 start-0 m-2 shadow-sm"

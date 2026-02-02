@@ -204,6 +204,13 @@
 
       let shouldRemove = false;
 
+      // EXCLUSIÓN: En Mercadillo no queremos Inmo ni Motor
+      if (fixed === "Mercado de Segunda Mano (Venta)") {
+        if (opt.value === "Inmobiliaria (Pisos/Locales)" || opt.value === "Vehículos y Motor") {
+          shouldRemove = true;
+        }
+      }
+
       if (exclude && (opt.value === exclude || groupLabel === exclude)) {
         shouldRemove = true;
       }
@@ -212,8 +219,10 @@
       }
 
       // Si hay un fixed, se queda si coincide con el valor O con la etiqueta del grupo
-      if (fixed && (opt.value !== fixed && groupLabel !== fixed)) {
-        shouldRemove = true;
+      if (fixed && fixed !== "Mercado de Segunda Mano (Venta)") {
+        if (opt.value !== fixed && groupLabel !== fixed) {
+          shouldRemove = true;
+        }
       }
 
       if (shouldRemove) {
@@ -230,6 +239,10 @@
     const validOptions = Array.from(catSelect.options).filter(o => o.value);
     if (validOptions.length === 1) {
       catSelect.value = validOptions[0].value;
+      // Si ya está prefijado un valor único y específico (Inmo o Motor), ocultamos la fila
+      if (fixed === "Inmobiliaria (Pisos/Locales)" || fixed === "Vehículos y Motor") {
+        catSelect.closest("li").style.display = "none";
+      }
     }
   }
 
@@ -272,7 +285,12 @@
 
   // ADAPTACIÓN DE TEXTOS PARA 'VENTAS'
   if (offerType === 'sales') {
-    document.getElementById("wTitle").placeholder = "Ej. iPhone 12, Sofá cama...";
+    const wTitle = document.getElementById("wTitle");
+    if (fixed === "Inmobiliaria (Pisos/Locales)" || fixed === "Vehículos y Motor") {
+      wTitle.placeholder = "";
+    } else {
+      wTitle.placeholder = "Ej. iPhone 12, Sofá cama...";
+    }
     // Forzar ocultar specialty
     document.getElementById("rowSpecialty").style.setProperty("display", "none", "important");
   }

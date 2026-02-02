@@ -173,11 +173,14 @@
     {% for item in items %}
     <div class="feed-item" data-id="{{ item.id }}">
         {% if item.video %}
-        <video src="{{ item.video }}" loop playsinline {% if loop.first %}autoplay{% endif %}></video>
+        <video src="{{ item.video }}" loop playsinline muted {% if loop.first %}autoplay{% endif %}
+            onclick="this.muted = !this.muted" style="cursor: pointer;"></video>
+        {% elif item.photo %}
+        <img src="{{ item.photo }}" class="w-100 h-100" style="object-fit: cover;">
         {% else %}
         <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-white bg-dark">
             <div class="fs-1 mb-3">📦</div>
-            <div>Sin previsualización de vídeo</div>
+            <div>Sin previsualización</div>
         </div>
         {% endif %}
 

@@ -129,9 +129,11 @@
       <source src="{{ o.video_path }}" type="video/quicktime">
       Tu móvil no soporta este vídeo.
     </video>
+    {% elif o.photo_path %}
+    <img src="{{ o.photo_path }}" class="offer-video" style="object-fit:cover;">
     {% else %}
     <div class="offer-video d-flex align-items-center justify-content-center text-white">
-      (Sin vídeo)
+      (Sin visualización)
     </div>
     {% endif %}
 
