@@ -85,13 +85,15 @@
     <div id="blockMotor" style="display:none;">
       <li class="ios-row d-flex align-items-center justify-content-between p-3 border-top border-bottom">
         <span class="ios-label">Marca</span>
-        <input type="text" id="wCarBrand" class="ios-input text-end" style="width:60%;"
-          placeholder="Ej. Seat, BMW..." />
+        <select id="wCarBrand" class="ios-input text-end" style="width:60%; direction:rtl; background:transparent;">
+          <option value="">Seleccionar...</option>
+        </select>
       </li>
       <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
         <span class="ios-label">Modelo</span>
-        <input type="text" id="wCarModel" class="ios-input text-end" style="width:60%;"
-          placeholder="Ej. Ibiza, Serie 3..." />
+        <select id="wCarModel" class="ios-input text-end" style="width:60%; direction:rtl; background:transparent;">
+          <option value="">Seleccionar marca primero...</option>
+        </select>
       </li>
       <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
         <span class="ios-label">Año</span>
@@ -295,6 +297,62 @@
     document.getElementById("rowSpecialty").style.setProperty("display", "none", "important");
   }
 
+  const carData = {
+    "SEAT": ["Arona", "Ibiza", "Leon", "Ateca", "Tarraco", "Alhambra"],
+    "Renault": ["Clio", "Captur", "Megane", "Austral", "Arkana", "Zoe"],
+    "Peugeot": ["208", "2008", "308", "3008", "508", "5008"],
+    "Volkswagen": ["Golf", "Polo", "T-Roc", "Tiguan", "Passat", "ID.3", "ID.4"],
+    "Toyota": ["Corolla", "Yaris", "C-HR", "RAV4", "Hilux", "Land Cruiser"],
+    "BMW": ["Serie 1", "Serie 2", "Serie 3", "Serie 4", "Serie 5", "X1", "X3", "X5"],
+    "Mercedes-Benz": ["Clase A", "Clase B", "Clase C", "Clase E", "GLA", "GLC", "GLE"],
+    "Audi": ["A1", "A3", "A4", "A5", "A6", "Q2", "Q3", "Q5"],
+    "Ford": ["Fiesta", "Focus", "Kuga", "Puma", "Mustang", "Custom"],
+    "Citroën": ["C3", "C4", "C5 Aircross", "Berlingo"],
+    "Hyundai": ["i10", "i20", "i30", "Tucson", "Kona", "Ioniq"],
+    "Kia": ["Picanto", "Rio", "Ceed", "Sportage", "Niro", "EV6"],
+    "Dacia": ["Sandero", "Duster", "Jogger", "Spring"],
+    "Fiat": ["500", "Panda", "Tipo", "Ducato"],
+    "Opel": ["Corsa", "Astra", "Mokka", "Grandland"],
+    "Nissan": ["Micra", "Juke", "Qashqai", "X-Trail", "Leaf"],
+    "Volvo": ["XC40", "XC60", "XC90", "V40", "S60"],
+    "Tesla": ["Model 3", "Model Y", "Model S", "Model X"],
+    "Porsche": ["911", "Cayenne", "Macan", "Taycan", "Panamera"],
+    "Jeep": ["Renegade", "Compass", "Wrangler", "Cherokee"],
+    "Mini": ["Hatch", "Countryman", "Clubman"],
+    "Land Rover": ["Evoque", "Velar", "Defender", "Discovery"],
+    "Lexus": ["UX", "NX", "RX", "ES"],
+    "Mazda": ["Mazda2", "Mazda3", "CX-30", "CX-5", "MX-5"],
+    "Skoda": ["Fabia", "Octavia", "Superb", "Kamiq", "Karoq", "Kodiaq"],
+    "Alfa Romeo": ["Giulia", "Stelvio", "Tonale"],
+    "Cupra": ["Formentor", "Leon", "Born", "Ateca"],
+    "Honda": ["Civic", "HR-V", "CR-V", "Jazz"],
+    "Suzuki": ["Swift", "Vitara", "Ignis", "Jimny"],
+    "Mitsubishi": ["ASX", "Eclipse Cross", "Outlander", "L200"]
+  };
+
+  const brandSelect = document.getElementById("wCarBrand");
+  const modelSelect = document.getElementById("wCarModel");
+
+  // Poblar Marcas
+  Object.keys(carData).sort().forEach(brand => {
+    const opt = document.createElement("option");
+    opt.value = brand;
+    opt.textContent = brand;
+    brandSelect.appendChild(opt);
+  });
+
+  // Manejar cambio de marca
+  brandSelect.addEventListener("change", function () {
+    const models = carData[this.value] || [];
+    modelSelect.innerHTML = '<option value="">Seleccionar...</option>';
+    models.forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m;
+      modelSelect.appendChild(opt);
+    });
+  });
+
   if (d.category) document.getElementById("wCategory").value = d.category;
   if (d.title) document.getElementById("wTitle").value = d.title;
   if (d.specialty) document.getElementById("wSpecialty").value = d.specialty;
@@ -307,8 +365,12 @@
   if (d.ac) document.getElementById("wAC").checked = d.ac;
   if (d.parking) document.getElementById("wParking").checked = d.parking;
 
-  if (d.carBrand) document.getElementById("wCarBrand").value = d.carBrand;
-  if (d.carModel) document.getElementById("wCarModel").value = d.carModel;
+  // Cargar marca y disparar evento para cargar modelos
+  if (d.carBrand) {
+    brandSelect.value = d.carBrand;
+    brandSelect.dispatchEvent(new Event("change"));
+    if (d.carModel) modelSelect.value = d.carModel;
+  }
   if (d.carYear) document.getElementById("wCarYear").value = d.carYear;
   if (d.carKm) document.getElementById("wCarKm").value = d.carKm;
   if (d.carFuel) document.getElementById("wCarFuel").value = d.carFuel;
