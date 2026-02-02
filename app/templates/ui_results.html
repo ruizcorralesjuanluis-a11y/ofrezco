@@ -76,6 +76,21 @@
 
 <!-- RESULTADOS -->
 <div class="mt-3">
+  <!-- Botón publicar dinámico (solo para ventas/inmo/motor) -->
+  {% if cat and ("Mercado" in cat or "Inmobiliaria" in cat or "Vehículos" in cat) %}
+  <div class="px-2 mb-3">
+    <a href="/ui/offers/new?type=sales&fixed_cat={{ cat }}" class="btn btn-dark w-100 pill py-3 fw-bold shadow-sm">
+      {% if "Inmobiliaria" in cat %}
+      🏡 Publicar Inmueble
+      {% elif "Vehículos" in cat %}
+      🏎️ Publicar Vehículo
+      {% else %}
+      🏪 Publicar Producto
+      {% endif %}
+    </a>
+  </div>
+  {% endif %}
+
   {% if view_mode == 'mosaic' %}
   <!-- MOSAICO PARA PRODUCTOS -->
   <div class="row g-2">

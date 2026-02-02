@@ -74,23 +74,12 @@ def ui_results(
     urg: str = "",
     db: Session = Depends(get_db)  # Inyección de DB
 ):
-    from app.models.product import Product
-    from app.core.data import get_flattened_categories
-    
-    view_mode = "list"
-    
-    # 1. Determinar si es búsqueda de productos (Mercadillo)
+    # 1. Determinar si es búsqueda de productos (Mercadillo, Inmo, Motor)
     is_product_search = False
     product_cats = [
         "Mercadillo y Segunda Mano", 
         "Mercado de Segunda Mano (Venta)",
         "Venta de cosas", 
-        "Ropa y Accesorios", 
-        "Muebles y Deco", 
-        "Electrónica",
-        "Electrónica y Móviles",
-        "Hogar y Muebles",
-        "Moda y Accesorios",
         "Inmobiliaria (Pisos/Locales)",
         "Vehículos y Motor"
     ]
@@ -98,57 +87,37 @@ def ui_results(
         is_product_search = True
         view_mode = "mosaic"
 
-    results = []
+    # Siempre usamos el modelo Offer en esta versión del proyecto
+    query = select(Offer).where(Offer.status == "PUBLISHED").order_by(Offer.id.desc())
+
+    # Filtrado por categoría (exceptuando el nombre del grupo principal si se desea ver todo)
+    if cat and cat != "Todas" and cat != "Mercado de Segunda Mano (Venta)":
+        query = query.where(Offer.category == cat)
     
-    if is_product_search:
-        # QUERY PRODUCTS
-        query = select(Product).where(Product.status == "PUBLISHED").order_by(Product.id.desc())
-        if cat and cat != "Mercadillo y Segunda Mano": # Si es subcategoría
-            query = query.where(Product.category == cat)
-        if q:
-            query = query.where(Product.title.contains(q))
-            
-        products = db.execute(query).scalars().all()
+    if q:
+        query = query.where(Offer.title.contains(q))
+
+    items = db.execute(query).scalars().all()
+    results = []
+
+    for o in items:
+        prof = db.get(Profile, o.profile_id)
+        u = db.get(User, prof.user_id) if prof else None
         
-        for p in products:
-            results.append({
-                "id": p.profile_id, # Link al perfil
-                "title": p.title,
-                "category": p.category,
-                "price": p.price or 0,
-                "video": p.video_path or "", # Path al video
-                "photo": "", # Podríamos sacar frame del video o placeholder
-                "desc": p.description or ""
-            })
-            
-    else:
-        # QUERY SERVICES (Offers)
-        query = select(Offer).where(Offer.status == "PUBLISHED").order_by(Offer.id.desc())
-        
-        # Excluir ofertas que sean de tipo PRODUCTO (legacy cleaning)
-        query = query.where(Offer.offer_kind.notin_(["PRODUCTO", "VENTA"]))
-
-        if cat and cat != "Todas":
-            query = query.where(Offer.category == cat)
-        if q:
-            query = query.where(Offer.title.contains(q))
-
-        offers = db.execute(query).scalars().all()
-
-        for o in offers:
-            prof = db.get(Profile, o.profile_id)
-            u = db.get(User, prof.user_id) if prof else None
-            
-            results.append({
-                "id": o.profile_id,
-                "name": u.name if u else "Usuario",
-                "role": o.title,
-                "photo": "https://via.placeholder.com/56",
-                "distance_km": 1.2,
-                "status": "Disponible" if o.available_now else "Consultar",
-                "offer_cat": o.category,
-                "desc": o.description or ""
-            })
+        results.append({
+            "id": o.profile_id,
+            "title": o.title,
+            "role": o.title, # Retrocompatibilidad con la card de listado
+            "name": u.name if u else "Usuario",
+            "category": o.category,
+            "offer_cat": o.category, # Retrocompatibilidad
+            "price": o.price or 0,
+            "video": o.video_path or "", # Path al video
+            "photo": o.photo_path or "https://via.placeholder.com/56", 
+            "distance_km": 1.2,
+            "status": "Disponible" if o.available_now else "Consultar",
+            "desc": o.description or ""
+        })
 
     return templates.TemplateResponse(
         "ui_results.html",
