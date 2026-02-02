@@ -133,6 +133,43 @@
         backdrop-filter: blur(4px);
     }
 
+    .feed-search {
+        position: absolute;
+        top: 15px;
+        left: 60px;
+        right: 15px;
+        z-index: 100;
+    }
+
+    .feed-search input {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #fff;
+        border-radius: 20px;
+        padding: 8px 15px 8px 40px;
+        width: 100%;
+        outline: none;
+        transition: all 0.3s;
+    }
+
+    .feed-search input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .feed-search input:focus {
+        background: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+    }
+
+    .feed-search .search-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.7;
+    }
+
     .feed-back {
         position: fixed;
         top: 20px;
@@ -168,6 +205,16 @@
 </style>
 
 <a href="{{ back_url or '/ui' }}" class="feed-back">←</a>
+
+<div class="feed-search">
+    <form action="/ui/feed" method="GET">
+        <input type="hidden" name="cat" value="{{ request.query_params.get('cat', '') }}">
+        <div class="position-relative">
+            <span class="search-icon">🔎</span>
+            <input type="text" name="q" placeholder="Buscar..." value="{{ request.query_params.get('q', '') }}">
+        </div>
+    </form>
+</div>
 
 <div class="feed-container" id="feed">
     {% for item in items %}
