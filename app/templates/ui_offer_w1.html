@@ -41,6 +41,14 @@
     <!-- BLOQUE INMOBILIARIA -->
     <div id="blockRealEstate" style="display:none;">
       <li class="ios-row d-flex align-items-center justify-content-between p-3 border-top border-bottom">
+        <span class="ios-label">Tipo de operación</span>
+        <select id="wOperationType" class="ios-input text-end"
+          style="width:60%; direction:rtl; background:transparent;">
+          <option value="Venta">Venta</option>
+          <option value="Alquiler">Alquiler</option>
+        </select>
+      </li>
+      <li class="ios-row d-flex align-items-center justify-content-between p-3 border-bottom">
         <span class="ios-label">Habitaciones</span>
         <input type="number" id="wRooms" class="ios-input text-end" style="width:60%;" placeholder="0" />
       </li>
@@ -384,6 +392,7 @@
   if (d.category) document.getElementById("wCategory").value = d.category;
   if (d.title) document.getElementById("wTitle").value = d.title;
   if (d.specialty) document.getElementById("wSpecialty").value = d.specialty;
+  if (d.operationType) document.getElementById("wOperationType").value = d.operationType;
   if (d.rooms) document.getElementById("wRooms").value = d.rooms;
   if (d.sqm) document.getElementById("wSqm").value = d.sqm;
   if (d.bathrooms) document.getElementById("wBathrooms").value = d.bathrooms;

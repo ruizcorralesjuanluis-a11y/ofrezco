@@ -75,11 +75,11 @@
 </style>
 
 <!-- BUSCADOR -->
-<div class="px-3 mb-3">
+<div class="px-3 mb-2">
   <form action="/ui/results" method="GET" class="position-relative">
     <input type="hidden" name="cat" value="{{ cat }}">
     <input type="hidden" name="view_mode" value="{{ view_mode }}">
-    <input type="text" name="q" value="{{ q }}" placeholder="Buscar en {{ cat or 'todas las categorías' }}..."
+    <input type="text" name="q" value="{{ q }}" placeholder="Buscar..."
       class="form-control pill py-2 ps-5 border-0 shadow-sm" style="background: #f1f5f9;">
     <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">🔎</span>
     <button type="submit"
@@ -87,6 +87,42 @@
       style="font-size: 0.8rem; margin-right: 4px;">Buscar</button>
   </form>
 </div>
+
+<!-- FILTROS PREMIUM INMOBILIARIA -->
+{% if "Inmobiliaria" in cat %}
+<div class="px-3 mb-3">
+  <form action="/ui/results" method="GET" class="d-flex flex-column gap-2 p-3 bg-white border border-light shadow-sm"
+    style="border-radius: 16px;">
+    <input type="hidden" name="cat" value="{{ cat }}">
+    <input type="hidden" name="view_mode" value="{{ view_mode }}">
+    <input type="hidden" name="q" value="{{ q }}">
+
+    <div class="d-flex gap-2">
+      <select name="op" class="form-select border-0 bg-light pill-sm flex-grow-1" style="font-size: 0.9rem;">
+        <option value="">Operación...</option>
+        <option value="Venta" {% if op=='Venta' %}selected{% endif %}>Venta</option>
+        <option value="Alquiler" {% if op=='Alquiler' %}selected{% endif %}>Alquiler</option>
+      </select>
+      <select name="rooms" class="form-select border-0 bg-light pill-sm" style="font-size: 0.9rem; width: 35%;">
+        <option value="">Hab...</option>
+        <option value="1" {% if rooms=='1' %}selected{% endif %}>1+</option>
+        <option value="2" {% if rooms=='2' %}selected{% endif %}>2+</option>
+        <option value="3" {% if rooms=='3' %}selected{% endif %}>3+</option>
+        <option value="4" {% if rooms=='4' %}selected{% endif %}>4+</option>
+      </select>
+    </div>
+
+    <div class="d-flex gap-2 align-items-center">
+      <div class="position-relative flex-grow-1">
+        <input type="number" name="sqm" value="{{ sqm }}" placeholder="Mín. m²"
+          class="form-control border-0 bg-light pill-sm" style="font-size: 0.9rem; padding-left: 12px;">
+      </div>
+      <button type="submit" class="btn btn-primary pill-sm py-2 px-4 shadow-sm"
+        style="background: #002c5f; border: none; font-weight: 600;">Filtrar</button>
+    </div>
+  </form>
+</div>
+{% endif %}
 
 <!-- Botón publicar dinámico (solo para ventas/inmo/motor) -->
 {% if cat and ("Mercado" in cat or "Inmobiliaria" in cat or "Vehículos" in cat) %}
@@ -129,7 +165,18 @@
         </div>
         <div class="p-2">
           <div class="fw-bold text-truncate" style="font-size:14px;">{{ p.title }}</div>
-          <div class="text-muted small text-truncate">{{ p.category }}</div>
+          <div class="d-flex justify-content-between align-items-center mt-1">
+            <span class="fw-bold" style="color: #002c5f;">{{ p.price | format_price }} €</span>
+            <span class="small text-muted">{{ p.distance_km }} km</span>
+          </div>
+          {% if p.extra and (p.extra.rooms or p.extra.sqm) %}
+          <div class="mt-2 d-flex gap-1 flex-wrap">
+            {% if p.extra.rooms %}<span class="badge bg-light text-dark border-0" style="font-size: 0.7rem;">{{
+              p.extra.rooms }} hab.</span>{% endif %}
+            {% if p.extra.sqm %}<span class="badge bg-light text-dark border-0" style="font-size: 0.7rem;">{{
+              p.extra.sqm }} m²</span>{% endif %}
+          </div>
+          {% endif %}
         </div>
       </div>
     </a>
@@ -153,28 +200,39 @@
           <div>
             <h6 class="mb-0 fw-bold text-truncate">{{ p.role }}</h6>
             <div class="text-secondary small text-truncate-2 mt-1">{{ p.desc }}</div>
+            {% if p.extra and (p.extra.rooms or p.extra.sqm) %}
+            <div class="mt-2 d-flex gap-1 flex-wrap">
+              {% if p.extra.rooms %}<span class="badge bg-light text-dark border-0" style="font-size: 0.7rem;">{{
+                p.extra.rooms }} hab.</span>{% endif %}
+              {% if p.extra.sqm %}<span class="badge bg-light text-dark border-0" style="font-size: 0.7rem;">{{
+                p.extra.sqm }} m²</span>{% endif %}
+              {% if p.extra.operation_type %}<span class="badge bg-success bg-opacity-10 text-success border-0"
+                style="font-size: 0.7rem;">{{ p.extra.operation_type }}</span>{% endif %}
+            </div>
+            {% endif %}
           </div>
           <div class="d-flex flex-column align-items-end flex-shrink-0 ms-2">
             <span class="badge bg-light text-dark border mb-1">{{ p.distance_km }} km</span>
             {% if p.price is not none %}
-            <span class="badge bg-success bg-opacity-10 text-success border border-success">{{ p.price | format_price
-              }} €</span>
+            <span class="badge bg-success bg-opacity-10 text-success border border-success">{{ p.price | format_price }}
+              €</span>
             {% endif %}
           </div>
         </div>
-        <div class="d-flex align-items-center gap-2 small muted">
+        <div class="d-flex align-items-center gap-2 small muted mt-2">
           <span>{{ p.offer_cat }}</span>
           <span>•</span>
           <span>{{ p.status }}</span>
         </div>
       </div>
     </div>
-  </a>
-  {% else %}
-  <div class="text-center py-5 muted">
-    No se encontraron profesionales.
-  </div>
-  {% endfor %}
+</div>
+</a>
+{% else %}
+<div class="text-center py-5 muted">
+  No se encontraron profesionales.
+</div>
+{% endfor %}
 </div>
 {% endif %}
 </div>

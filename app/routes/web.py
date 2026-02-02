@@ -85,6 +85,9 @@ def ui_results(
     cat: str = "",
     mode: str = "",
     urg: str = "",
+    op: str = "",           # Real Estate: Alquiler / Venta
+    rooms: str = "",        # Real Estate: Mínimo habitaciones
+    sqm: str = "",          # Real Estate: Mínimo m2
     db: Session = Depends(get_db)  # Inyección de DB
 ):
     sales_cats = get_sales_categories()
@@ -111,6 +114,14 @@ def ui_results(
     # 2. Lógica de filtrado estricto
     if cat == "Inmobiliaria (Pisos/Locales)":
         query = query.where(Offer.category == "Inmobiliaria (Pisos/Locales)")
+        # Filtros Premium de Inmobiliaria
+        if op:
+            query = query.where(Offer.extra_info["operation_type"].as_string() == op)
+        if rooms:
+            query = query.where(Offer.extra_info["rooms"].as_integer() >= int(rooms))
+        if sqm:
+            query = query.where(Offer.extra_info["sqm"].as_integer() >= int(sqm))
+
     elif cat == "Vehículos y Motor":
         query = query.where(Offer.category == "Vehículos y Motor")
     elif cat == "Mercado de Segunda Mano (Venta)":
@@ -163,7 +174,8 @@ def ui_results(
             "results": results, 
             "flat_categories": get_flattened_categories(),
             "q": q, "cat": cat,
-            "view_mode": view_mode
+            "view_mode": view_mode,
+            "op": op, "rooms": rooms, "sqm": sqm
         },
     )
 
