@@ -68,6 +68,13 @@
     renderSummary();
     alert("Borrador eliminado.");
   }
+  function formatPrice(value) {
+    if (value == null || value === "") return "0";
+    try {
+      let num = Math.floor(parseFloat(value));
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    } catch (e) { return value; }
+  }
   function renderSummary() {
     const d = loadDraft();
     const s = document.getElementById("summary");
@@ -78,7 +85,7 @@
     if (d.zone_text) lines.push(`<b>Zona:</b> ${d.zone_text}`);
     if (d.service_radius_km) lines.push(`<b>Radio:</b> ${d.service_radius_km} km`);
     lines.push(`<b>Disponible ahora:</b> ${d.available_now ? "Sí" : "No"}`);
-    if (d.price != null) lines.push(`<b>Precio:</b> ${d.price} €`);
+    if (d.price != null) lines.push(`<b>Precio:</b> ${formatPrice(d.price)} €`);
     if (d.rooms) lines.push(`<b>Habitaciones:</b> ${d.rooms}`);
     if (d.sqm) lines.push(`<b>Metros:</b> ${d.sqm} m²`);
     if (d.bathrooms) lines.push(`<b>Baños:</b> ${d.bathrooms}`);
