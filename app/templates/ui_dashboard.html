@@ -52,7 +52,8 @@
 
         <div class="col-12">
           <label class="form-label">Descripción</label>
-          <textarea id="profile_desc" class="form-control" rows="3" placeholder="Ej. Hago croquetas / Soy electricista..."></textarea>
+          <textarea id="profile_desc" class="form-control" rows="3"
+            placeholder="Ej. Hago croquetas / Soy electricista..."></textarea>
         </div>
 
         <div class="col-12">
@@ -112,7 +113,8 @@
 
         <div class="col-12">
           <label class="form-label">Descripción</label>
-          <textarea id="offer_desc" class="form-control" rows="3" placeholder="Detalles, horario, zona, etc."></textarea>
+          <textarea id="offer_desc" class="form-control" rows="3"
+            placeholder="Detalles, horario, zona, etc."></textarea>
         </div>
 
         <div class="col-md-4">
@@ -157,133 +159,222 @@
 
 {% block scripts %}
 <script>
-let PROFILES = [];
+  let PROFILES = [];
 
-async function fetchProfiles(){
-  const res = await fetch("/api/v1/profiles");
-  PROFILES = await res.json();
+  async function fetchProfiles() {
+    const res = await fetch("/api/v1/profiles");
+    PROFILES = await res.json();
 
-  const sel = document.getElementById("profile_select");
-  sel.innerHTML = "";
+    const sel = document.getElementById("profile_select");
+    sel.innerHTML = "";
 
-  if (PROFILES.length === 0){
-    sel.innerHTML = `<option value="">(No hay perfiles aún)</option>`;
-    return;
+    if (PROFILES.length === 0) {
+      sel.innerHTML = `<option value="">(No hay perfiles aún)</option>`;
+      return;
+    }
+
+    for (const p of PROFILES) {
+      sel.innerHTML += `<option value="${p.id}">Perfil #${p.id} · ${p.profile_type} · user ${p.user_id}</option>`;
+    }
+
+    // autoselecciona el primero
+    sel.value = PROFILES[0].id;
+    loadSelectedProfile();
   }
 
-  for (const p of PROFILES){
-    sel.innerHTML += `<option value="${p.id}">Perfil #${p.id} · ${p.profile_type} · user ${p.user_id}</option>`;
+  function loadSelectedProfile() {
+    const id = Number(document.getElementById("profile_select").value);
+    const p = PROFILES.find(x => x.id === id);
+    if (!p) return;
+
+    document.getElementById("offer_profile_id").value = p.id;
+    document.getElementById("user_id").value = p.user_id;
+    document.getElementById("profile_type").value = p.profile_type;
+    document.getElementById("profile_available").value = String(p.available_now);
+    document.getElementById("profile_desc").value = p.description || "";
+    document.getElementById("profile_video").value = p.video_url || "";
   }
 
-  // autoselecciona el primero
-  sel.value = PROFILES[0].id;
-  loadSelectedProfile();
-}
+  async function saveProfile() {
+    const payload = {
+      user_id: Number(document.getElementById("user_id").value),
+      profile_type: document.getElementById("profile_type").value,
+      description: document.getElementById("profile_desc").value.trim() || null,
+      video_url: document.getElementById("profile_video").value.trim() || null,
+      available_now: document.getElementById("profile_available").value === "true"
+    };
 
-function loadSelectedProfile(){
-  const id = Number(document.getElementById("profile_select").value);
-  const p = PROFILES.find(x => x.id === id);
-  if (!p) return;
+    const res = await fetch("/api/v1/profiles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-  document.getElementById("offer_profile_id").value = p.id;
-  document.getElementById("user_id").value = p.user_id;
-  document.getElementById("profile_type").value = p.profile_type;
-  document.getElementById("profile_available").value = String(p.available_now);
-  document.getElementById("profile_desc").value = p.description || "";
-  document.getElementById("profile_video").value = p.video_url || "";
-}
+    const out = document.getElementById("profile_result");
+    out.style.display = "block";
+    out.textContent = await res.text();
 
-async function saveProfile(){
-  const payload = {
-    user_id: Number(document.getElementById("user_id").value),
-    profile_type: document.getElementById("profile_type").value,
-    description: document.getElementById("profile_desc").value.trim() || null,
-    video_url: document.getElementById("profile_video").value.trim() || null,
-    available_now: document.getElementById("profile_available").value === "true"
-  };
-
-  const res = await fetch("/api/v1/profiles", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(payload)
-  });
-
-  const out = document.getElementById("profile_result");
-  out.style.display = "block";
-  out.textContent = await res.text();
-
-  await fetchProfiles(); // refresca selector
-}
-
-async function createOffer(){
-  const profileId = Number(document.getElementById("offer_profile_id").value);
-  if (!profileId){
-    alert("Selecciona o crea un perfil primero.");
-    return;
+    await fetchProfiles(); // refresca selector
   }
 
-  const payload = {
-    profile_id: profileId,
-    offer_kind: document.getElementById("offer_kind").value,
-    category: document.getElementById("offer_category").value.trim(),
-    title: document.getElementById("offer_title").value.trim(),
-    description: document.getElementById("offer_desc").value.trim() || null,
-    price: document.getElementById("offer_price").value ? Number(document.getElementById("offer_price").value) : null,
-    currency: document.getElementById("offer_currency").value.trim() || "EUR",
-    available_now: document.getElementById("offer_available").value === "true",
-    allergens: document.getElementById("offer_allergens").value.trim() || null
-  };
+  async function createOffer() {
+    const profileId = Number(document.getElementById("offer_profile_id").value);
+    if (!profileId) {
+      alert("Selecciona o crea un perfil primero.");
+      return;
+    }
 
-  const res = await fetch("/api/v1/offers", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(payload)
-  });
+    const payload = {
+      profile_id: profileId,
+      offer_kind: document.getElementById("offer_kind").value,
+      category: document.getElementById("offer_category").value.trim(),
+      title: document.getElementById("offer_title").value.trim(),
+      description: document.getElementById("offer_desc").value.trim() || null,
+      price: document.getElementById("offer_price").value ? Number(document.getElementById("offer_price").value) : null,
+      currency: document.getElementById("offer_currency").value.trim() || "EUR",
+      available_now: document.getElementById("offer_available").value === "true",
+      allergens: document.getElementById("offer_allergens").value.trim() || null
+    };
 
-  const out = document.getElementById("offer_result");
-  out.style.display = "block";
-  out.textContent = await res.text();
+    const res = await fetch("/api/v1/offers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-  await loadMyOffers();
-}
+    const out = document.getElementById("offer_result");
+    out.style.display = "block";
+    out.textContent = await res.text();
 
-async function loadMyOffers(){
-  const profileId = Number(document.getElementById("offer_profile_id").value);
-  const list = document.getElementById("my_offers");
-  list.innerHTML = "";
-
-  if (!profileId){
-    list.innerHTML = `<div class="muted">Selecciona un perfil para ver sus ofertas.</div>`;
-    return;
+    await loadMyOffers();
   }
 
-  const res = await fetch("/api/v1/offers?profile_id=" + profileId);
-  const data = await res.json();
+  async function loadMyOffers() {
+    const profileId = Number(document.getElementById("offer_profile_id").value);
+    const list = document.getElementById("my_offers");
+    list.innerHTML = "";
 
-  if (data.length === 0){
-    list.innerHTML = `<div class="muted">Aún no hay ofertas para este perfil.</div>`;
-    return;
-  }
+    if (!profileId) {
+      list.innerHTML = `<div class="muted">Selecciona un perfil para ver sus ofertas.</div>`;
+      return;
+    }
 
-  for (const o of data){
-    const price = (o.price !== null && o.price !== undefined) ? `${o.price} ${o.currency}` : "—";
-    const avail = o.available_now ? "✅ Disponible" : "⏸️ No disponible";
-    list.innerHTML += `
-      <div class="card-soft p-3">
-        <div class="d-flex justify-content-between gap-3">
-          <div>
-            <div class="muted">${o.offer_kind} · ${o.category} · ${avail}</div>
-            <div class="fw-bold fs-5">${o.title}</div>
-            ${o.description ? `<div class="mt-2">${o.description}</div>` : ""}
-            ${o.allergens ? `<div class="mt-2 small muted">Alérgenos: ${o.allergens}</div>` : ""}
+    const res = await fetch("/api/v1/offers?profile_id=" + profileId);
+    const data = await res.json();
+
+    if (data.length === 0) {
+      list.innerHTML = `<div class="muted">Aún no hay ofertas para este perfil.</div>`;
+      return;
+    }
+
+    for (const o of data) {
+      const price = (o.price !== null && o.price !== undefined) ? `${o.price} ${o.currency}` : "—";
+      const avail = o.available_now ? "✅ Disponible" : "⏸️ No disponible";
+
+      // Logic for link: Feed if video, Detail if not
+      const hasVideo = !!o.video_path;
+      const link = hasVideo
+        ? `/ui/feed?cat=${encodeURIComponent(o.category)}&start_id=${o.id}`
+        : `/ui/offer/${o.id}`;
+
+      list.innerHTML += `
+      <a href="${link}" class="text-decoration-none text-dark">
+        <div class="card-soft p-3">
+          <div class="d-flex justify-content-between gap-3">
+            <div>
+              <div class="muted">${o.offer_kind} · ${o.category} · ${avail}</div>
+              <div class="fw-bold fs-5">${o.title}</div>
+              ${o.description ? `<div class="mt-2">${o.description}</div>` : ""}
+              ${o.allergens ? `<div class="mt-2 small muted">Alérgenos: ${o.allergens}</div>` : ""}
+              <div class="d-flex gap-2 mt-2">
+                 ${hasVideo ? '<div class="badge bg-dark">📹 Video</div>' : ''}
+                 <button class="btn btn-sm btn-outline-secondary z-3 position-relative" 
+                   onclick="event.preventDefault(); editOffer(${o.id})">✏️ Editar</button>
+              </div>
+            </div>
+            <div class="text-end fw-bold">${price}</div>
           </div>
-          <div class="text-end fw-bold">${price}</div>
         </div>
-      </div>
+      </a>
     `;
+    }
   }
-}
 
-fetchProfiles();
+  async function editOffer(id) {
+    try {
+      const res = await fetch(`/api/v1/offers?mine=true&profile_id=${document.getElementById("offer_profile_id").value}&limit=1000`);
+      const offers = await res.json();
+      const offer = offers.find(o => o.id === id);
+      if (!offer) { alert("Error: no se encuentra la oferta"); return; }
+
+      // Mapear al formato Draft
+      const d = {
+        editing_id: offer.id, // Flag vital
+        category: offer.category,
+        title: offer.title,
+        description: offer.desc, // Cuidado con el mapeo, en API puede venir como desc o description? Check schema.
+        price: offer.price,
+        offer_type: (offer.category.includes("Mercado") || offer.category.includes("Inmobiliaria") || offer.category.includes("Vehículos")) ? 'sales' : 'service',
+        // Mapeo extra info ...
+      };
+
+      // API devuelve 'desc', pero en el draft usamos 'description'? 
+      // En list_offers: "desc": o.description or ""
+      // En createOffer payload usamos description.
+      // Vamos a usar description.
+      d.description = offer.desc;
+
+      // Recuperar extra_info
+      if (offer.extra) {
+        Object.assign(d, offer.extra);
+        // Mapeos específicos si hacen falta
+        if (offer.extra.zone_text) d.zone_text = offer.extra.zone_text;
+        if (offer.extra.city) d.city = offer.extra.city;
+
+        // Inmo
+        if (offer.extra.rooms) d.rooms = offer.extra.rooms;
+        if (offer.extra.sqm) d.sqm = offer.extra.sqm;
+        // ... resto de campos se pueden asignar directo si coinciden los nombres
+        // En w4 publish: rooms: d.rooms
+        // En detail: info.rooms
+        // Parece que coinciden mayormente.
+        d.bathrooms = offer.extra.bathrooms;
+        d.floor = offer.extra.floor;
+        d.lift = offer.extra.lift;
+        d.terrace = offer.extra.terrace;
+        d.ac = offer.extra.ac;
+        d.parking = offer.extra.parking;
+
+        // Motor
+        d.carBrand = offer.extra.car_brand; // ojo camelCase vs snake_case
+        d.carModel = offer.extra.car_model;
+        d.carYear = offer.extra.car_year;
+        d.carKm = offer.extra.car_km;
+        d.carCC = offer.extra.car_cc;
+        d.carHp = offer.extra.car_hp;
+        d.carFuel = offer.extra.car_fuel;
+        d.carTrans = offer.extra.car_trans;
+      }
+
+      // Available now
+      // en dashboard list: avail = o.available_now
+      // API response: available_now
+      d.available_now = (offer.status === "Disponible"); // Ojo, en visual dice status, en API es available_now...
+      // Revisando web.py: "status": "Disponible" if o.available_now else "Consultar"
+      d.available_now = (offer.status === "Disponible");
+
+      // Profile ID para la key
+      const pid = document.getElementById("offer_profile_id").value || "anon";
+      localStorage.setItem("draft_offer_" + pid, JSON.stringify(d));
+
+      // Redirigir
+      location.href = `/ui/offers/new?type=${d.offer_type}`;
+
+    } catch (e) {
+      console.error(e);
+      alert("Error preparando edición: " + e.message);
+    }
+  }
+  fetchProfiles();
 </script>
 {% endblock %}

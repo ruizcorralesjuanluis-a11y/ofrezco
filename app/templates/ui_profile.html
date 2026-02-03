@@ -114,48 +114,104 @@
   </div>
 </div>
 
-<div class="pro-section">
-  <div class="section-title">Mis Servicios ({{ offers|length }})</div>
+<div class="pro-section p-0 border-0">
+  <div class="d-flex text-center bg-white border-bottom">
+    <div class="flex-grow-1 p-3 fw-bold border-bottom border-3 border-dark" id="tabOffers" onclick="switchTab('offers')"
+      style="cursor:pointer;">
+      Mis Anuncios ({{ offers|length }})
+    </div>
+    {% if user and user.profile_id == p.id %}
+    <div class="flex-grow-1 p-3 fw-bold text-muted border-bottom border-3 border-transparent" id="tabFavs"
+      onclick="switchTab('favs')" style="cursor:pointer;">
+      Favoritos ({{ favorites|length }})
+    </div>
+    {% endif %}
+  </div>
+</div>
 
+<!-- SECTION: OFFERS -->
+<div id="sectionOffers" class="pro-section border-top-0 mt-0">
   {% if offers|length == 0 %}
-  <div class="text-center text-muted py-3">No hay ofertas publicadas.</div>
+  <div class="text-center text-muted py-5">
+    <div style="font-size:40px; margin-bottom:10px;">📭</div>
+    No hay ofertas publicadas.
+  </div>
   {% endif %}
 
   {% for o in offers %}
   <div class="offer-card position-relative" id="offer-{{ o.id }}">
     {% if user and user.profile_id == p.id %}
-    <button class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle"
-      onclick="deleteOffer({{ o.id }})"
-      style="z-index:10; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">
-      🗑
-    </button>
-    {% endif %}
-
-    {% if o.video_path %}
-    <video class="offer-video" controls playsinline poster="https://via.placeholder.com/400x200?text=Video+Oferta">
-      <source src="{{ o.video_path }}" type="video/mp4">
-      <source src="{{ o.video_path }}" type="video/quicktime">
-      Tu móvil no soporta este vídeo.
-    </video>
-    {% elif o.photo_path %}
-    <img src="{{ o.photo_path }}" class="offer-video" style="object-fit:cover;">
-    {% else %}
-    <div class="offer-video d-flex align-items-center justify-content-center text-white">
-      (Sin visualización)
+    <div class="position-absolute top-0 end-0 m-2 d-flex gap-2" style="z-index:10;">
+      <button class="btn btn-sm btn-light rounded-circle shadow-sm" onclick="editOffer({{ o.id }})"
+        style="width:32px; height:32px; display:flex; align-items:center; justify-content:center;">
+        ✏️
+      </button>
+      <button class="btn btn-sm btn-danger rounded-circle shadow-sm" onclick="deleteOffer({{ o.id }})"
+        style="width:32px; height:32px; display:flex; align-items:center; justify-content:center;">
+        🗑
+      </button>
     </div>
     {% endif %}
 
-    <div class="offer-body">
-      {% if o.price %}
-      <div class="offer-price">{{ o.price | format_price }} €</div>
+    <a href="/ui/offer/{{ o.id }}" class="text-decoration-none text-dark">
+      {% if o.video_path %}
+      <video class="offer-video" playsinline muted poster="https://via.placeholder.com/400x200?text=Video+Oferta">
+        <source src="{{ o.video_path }}" type="video/mp4">
+      </video>
+      {% elif o.photo_path %}
+      <img src="{{ o.photo_path }}" class="offer-video" style="object-fit:cover;">
+      {% else %}
+      <div class="offer-video d-flex align-items-center justify-content-center text-white bg-secondary">
+        (Sin visualización)
+      </div>
       {% endif %}
-      <div class="offer-title">{{ o.title }}</div>
-      <div class="text-secondary small mb-2">{{ o.description }}</div>
-      <div class="text-muted small">{{ o.category }}</div>
-    </div>
+
+      <div class="offer-body">
+        {% if o.price %}
+        <div class="offer-price">{{ o.price | format_price }} €</div>
+        {% endif %}
+        <div class="offer-title">{{ o.title }}</div>
+        <div class="text-secondary small mb-2 text-truncate">{{ o.description }}</div>
+        <div class="text-muted small">{{ o.category }}</div>
+      </div>
+    </a>
   </div>
   {% endfor %}
 </div>
+
+<!-- SECTION: FAVORITES (Hidden by default) -->
+{% if user and user.profile_id == p.id %}
+<div id="sectionFavs" class="pro-section border-top-0 mt-0" style="display:none;">
+  {% if favorites|length == 0 %}
+  <div class="text-center text-muted py-5">
+    <div style="font-size:40px; margin-bottom:10px;">💔</div>
+    Aún no has guardado favoritos.
+  </div>
+  {% endif %}
+
+  {% for o in favorites %}
+  <div class="offer-card position-relative" id="fav-{{ o.id }}">
+    <button class="btn btn-sm btn-light position-absolute top-0 end-0 m-2 rounded-circle shadow-sm"
+      onclick="removeFav({{ o.id }})"
+      style="z-index:10; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">
+      💔
+    </button>
+    <a href="{% if o.video_path %}/ui/feed?cat={{o.category}}&start_id={{o.id}}{% else %}/ui/offer/{{ o.id }}{% endif %}"
+      class="text-decoration-none text-dark">
+      <div class="d-flex align-items-center p-2 bg-white">
+        <img src="{{ o.photo_path or 'https://via.placeholder.com/60' }}"
+          style="width:60px; height:60px; object-fit:cover; border-radius:8px;" class="me-3">
+        <div class="flex-grow-1">
+          <div class="fw-bold small">{{ o.title }}</div>
+          <div class="text-success fw-bold">{{ o.price | format_price }} €</div>
+        </div>
+        <div style="font-size:20px;">❤️</div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 
 <div class="p-3 mt-2 mb-4">
   {% if not (user and user.profile_id == p.id) %}
@@ -167,6 +223,27 @@
 </div>
 
 <script>
+  function switchTab(tab) {
+    const tOffers = document.getElementById('tabOffers');
+    const tFavs = document.getElementById('tabFavs');
+    const sOffers = document.getElementById('sectionOffers');
+    const sFavs = document.getElementById('sectionFavs');
+
+    if (tab === 'offers') {
+      tOffers.classList.add('border-dark'); tOffers.classList.remove('text-muted', 'border-transparent');
+      if (tFavs) { tFavs.classList.remove('border-dark'); tFavs.classList.add('text-muted', 'border-transparent'); }
+
+      sOffers.style.display = 'block';
+      if (sFavs) sFavs.style.display = 'none';
+    } else {
+      tOffers.classList.remove('border-dark'); tOffers.classList.add('text-muted', 'border-transparent');
+      if (tFavs) { tFavs.classList.add('border-dark'); tFavs.classList.remove('text-muted', 'border-transparent'); }
+
+      sOffers.style.display = 'none';
+      if (sFavs) sFavs.style.display = 'block';
+    }
+  }
+
   async function deleteOffer(id) {
     if (!confirm("¿Seguro que quieres borrar esta oferta?")) return;
     try {
@@ -177,6 +254,95 @@
         alert("Error al borrar");
       }
     } catch (e) { alert("Error: " + e); }
+  }
+
+  async function editOffer(id) {
+    try {
+      const profileId = {{ p.id }
+    };
+    // Fetch specific offer details to ensure we have all fields (extra_info etc)
+    const res = await fetch(`/api/v1/offers?mine=true&profile_id=${profileId}&limit=1000`);
+    const offers = await res.json();
+    const offer = offers.find(o => o.id === id);
+    if (!offer) { alert("Error: no se encuentra la oferta"); return; }
+
+    // Mapear al formato Draft
+    const d = {
+      editing_id: offer.id,
+      category: offer.category,
+      title: offer.title,
+      description: offer.desc,
+      price: offer.price,
+      offer_type: (offer.category.includes("Mercado") || offer.category.includes("Inmobiliaria") || offer.category.includes("Vehículos")) ? 'sales' : 'service',
+    };
+
+    // extra_info mapping
+    if (offer.extra) {
+      Object.assign(d, offer.extra);
+      // Common fields
+      if (offer.extra.zone_text) d.zone_text = offer.extra.zone_text;
+      if (offer.extra.city) d.city = offer.extra.city;
+
+      // Inmo
+      if (offer.extra.rooms) d.rooms = offer.extra.rooms;
+      if (offer.extra.sqm) d.sqm = offer.extra.sqm;
+      if (offer.extra.bathrooms) d.bathrooms = offer.extra.bathrooms;
+      if (offer.extra.floor) d.floor = offer.extra.floor;
+      if (offer.extra.lift) d.lift = offer.extra.lift;
+      if (offer.extra.terrace) d.terrace = offer.extra.terrace;
+      if (offer.extra.ac) d.ac = offer.extra.ac;
+      if (offer.extra.parking) d.parking = offer.extra.parking;
+
+      // Motor
+      if (offer.extra.car_brand) d.carBrand = offer.extra.car_brand;
+      if (offer.extra.car_model) d.carModel = offer.extra.car_model;
+      if (offer.extra.car_year) d.carYear = offer.extra.car_year;
+      if (offer.extra.car_km) d.carKm = offer.extra.car_km;
+      if (offer.extra.car_cc) d.carCC = offer.extra.car_cc;
+      if (offer.extra.car_hp) d.carHp = offer.extra.car_hp;
+      if (offer.extra.car_fuel) d.carFuel = offer.extra.car_fuel;
+      if (offer.extra.car_trans) d.carTrans = offer.extra.car_trans;
+    }
+
+    d.available_now = (offer.status === "Disponible");
+
+    // Status
+    if (offer.status) d.status = offer.status;
+
+    localStorage.setItem("draft_offer_" + profileId, JSON.stringify(d));
+    location.href = `/ui/offers/new?type=${d.offer_type}`;
+
+  } catch (e) {
+    console.error(e);
+    alert("Error preparando edición: " + e.message);
+  }
+  }
+
+  async function removeFav(id) {
+    if (!confirm("¿Ya no te interesa esta oferta?")) return;
+    try {
+      const r = await fetch(`/api/v1/favorites/toggle/${id}`, { method: "POST" });
+      const j = await r.json();
+      if (j.status === "removed") {
+        const el = document.getElementById(`fav-${id}`);
+        if (el) el.remove();
+
+        // Update counter if possible
+        const tab = document.getElementById("tabFavs");
+        if (tab) {
+          const m = tab.textContent.match(/\d+/);
+          if (m) {
+            const count = parseInt(m[0]) - 1;
+            tab.textContent = `Favoritos (${count})`;
+          }
+        }
+      } else {
+        alert("No se pudo eliminar de favoritos.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error al eliminar favorito");
+    }
   }
 </script>
 
