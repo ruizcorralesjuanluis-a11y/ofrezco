@@ -45,6 +45,39 @@ def create_offer(payload: OfferCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Error interno al guardar: {str(e)}")
 
 
+
+@router.put("/offers/{offer_id}", response_model=OfferOut)
+def update_offer(offer_id: int, payload: OfferCreate, db: Session = Depends(get_db)):
+    print(f"DEBUG: Actualizando oferta {offer_id} con payload: {payload.dict()}")
+    offer = db.execute(select(Offer).where(Offer.id == offer_id)).scalar_one_or_none()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer no encontrada.")
+
+    try:
+        offer.offer_kind = payload.offer_kind
+        offer.category = payload.category
+        offer.title = payload.title
+        offer.description = payload.description
+        offer.price = payload.price
+        offer.currency = payload.currency
+        offer.available_now = payload.available_now
+        offer.allergens = payload.allergens
+        offer.extra_info = payload.extra_info
+        
+        # ✅ Si viene status en el payload, lo actualizamos (DRAFT, PUBLISHED, RESERVADO, VENDIDO)
+        if payload.status:
+            offer.status = payload.status
+
+        db.commit()
+        db.refresh(offer)
+        print(f"DEBUG: Oferta actualizada con éxito: {offer.id}")
+        return offer
+    except Exception as e:
+        db.rollback()
+        print(f"ERROR actualizando oferta: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno al actualizar: {str(e)}")
+
+
 @router.post("/offers/{offer_id}/submit", response_model=OfferOut)
 def submit_for_review(offer_id: int, db: Session = Depends(get_db)):
     offer = db.execute(select(Offer).where(Offer.id == offer_id)).scalar_one_or_none()

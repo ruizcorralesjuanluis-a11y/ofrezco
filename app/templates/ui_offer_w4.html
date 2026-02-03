@@ -82,27 +82,34 @@
     if (d.category) lines.push(`<b>Categoría:</b> ${d.category}`);
     if (d.title) lines.push(`<b>Título:</b> ${d.title}`);
     if (d.specialty) lines.push(`<b>Especialidad:</b> ${d.specialty}`);
+    if (d.city) lines.push(`<b>Ciudad:</b> ${d.city}`);
     if (d.zone_text) lines.push(`<b>Zona:</b> ${d.zone_text}`);
     if (d.service_radius_km) lines.push(`<b>Radio:</b> ${d.service_radius_km} km`);
     lines.push(`<b>Disponible ahora:</b> ${d.available_now ? "Sí" : "No"}`);
     if (d.price != null) lines.push(`<b>Precio:</b> ${formatPrice(d.price)} €`);
-    if (d.rooms) lines.push(`<b>Habitaciones:</b> ${d.rooms}`);
-    if (d.sqm) lines.push(`<b>Metros:</b> ${d.sqm} m²`);
-    if (d.bathrooms) lines.push(`<b>Baños:</b> ${d.bathrooms}`);
-    if (d.floor) lines.push(`<b>Planta:</b> ${d.floor}`);
-    if (d.lift) lines.push(`<b>Ascensor:</b> Sí`);
-    if (d.terrace) lines.push(`<b>Terraza:</b> Sí`);
-    if (d.ac) lines.push(`<b>Aire Acond.:</b> Sí`);
-    if (d.parking) lines.push(`<b>Garaje:</b> Sí`);
+    // CAMPOS DE INMOBILIARIA
+    if (d.category && d.category.includes("Inmobiliaria")) {
+      if (d.rooms) lines.push(`<b>Habitaciones:</b> ${d.rooms}`);
+      if (d.sqm) lines.push(`<b>Metros:</b> ${d.sqm} m²`);
+      if (d.bathrooms) lines.push(`<b>Baños:</b> ${d.bathrooms}`);
+      if (d.floor) lines.push(`<b>Planta:</b> ${d.floor}`);
+      if (d.lift) lines.push(`<b>Ascensor:</b> Sí`);
+      if (d.terrace) lines.push(`<b>Terraza:</b> Sí`);
+      if (d.ac) lines.push(`<b>Aire Acond.:</b> Sí`);
+      if (d.parking) lines.push(`<b>Garaje:</b> Sí`);
+    }
 
-    if (d.carBrand) lines.push(`<b>Marca:</b> ${d.carBrand}`);
-    if (d.carModel) lines.push(`<b>Modelo:</b> ${d.carModel}`);
-    if (d.carYear) lines.push(`<b>Año:</b> ${d.carYear}`);
-    if (d.carKm) lines.push(`<b>KM:</b> ${d.carKm}`);
-    if (d.carCC) lines.push(`<b>Cilindrada:</b> ${d.carCC} cc`);
-    if (d.carHp) lines.push(`<b>Potencia:</b> ${d.carHp} CV`);
-    if (d.carFuel) lines.push(`<b>Combustible:</b> ${d.carFuel}`);
-    if (d.carTrans) lines.push(`<b>Cambio:</b> Automático`);
+    // CAMPOS DE MOTOR
+    if (d.category && d.category.includes("Vehículos")) {
+      if (d.carBrand) lines.push(`<b>Marca:</b> ${d.carBrand}`);
+      if (d.carModel) lines.push(`<b>Modelo:</b> ${d.carModel}`);
+      if (d.carYear) lines.push(`<b>Año:</b> ${d.carYear}`);
+      if (d.carKm) lines.push(`<b>KM:</b> ${d.carKm}`);
+      if (d.carCC) lines.push(`<b>Cilindrada:</b> ${d.carCC} cc`);
+      if (d.carHp) lines.push(`<b>Potencia:</b> ${d.carHp} CV`);
+      if (d.carFuel) lines.push(`<b>Combustible:</b> ${d.carFuel}`);
+      if (d.carTrans) lines.push(`<b>Cambio:</b> Automático`);
+    }
 
     s.innerHTML = lines.join("<br>");
   }
@@ -122,30 +129,25 @@
     const isVenta = (d.category || "").includes("Venta") || (d.category || "").includes("Mercado");
     const videoFile = document.getElementById("wVideo").files[0];
 
-    // En edición, el video puede ser opcional si ya existe (pero aquí simplificamos: si sube uno nuevo, se reemplaza)
-    // Si es nuevo Y es venta, video obligatorio.
-    // Si es edit, videoFile es null si no lo cambia... asumimos que ya tiene. 
-    // TODO: Podríamos comprobar si d.video_path existe, pero el draft no lo suele tener a menos que lo inyectemos.
-    // Dashboard inyecta todo, así que d.video_path debería estar si venimos de edit.
-
-    if (!d.editing_id && isVenta && !videoFile) {
+    if (isVenta && !videoFile) {
       alert("⚠️ OBLIGATORIO: Para vender productos, debes subir un vídeo demostrativo.");
       return;
     }
 
-    // 1) Payload
-    const payload = {
-      profile_id: profileIdInt,
-      offer_kind: d.offer_type === 'sales' ? "PRODUCT" : "SERVICE", // Ajuste de fallback
-      category: d.category,
-      title: d.title,
-      description: (d.description || "").trim() || null,
-      price: (d.price == null || d.price === "" ? null : Number(d.price)),
-      currency: "EUR",
-      available_now: !!d.available_now,
-      allergens: d.specialty ? String(d.specialty) : null,
-      extra_info: (d.rooms || d.sqm || d.bathrooms || d.floor || d.lift || d.terrace || d.ac || d.parking || d.carBrand || d.carModel || d.carYear || d.carKm || d.carCC || d.carHp || d.carFuel || d.carTrans || d.operationType || d.zone_text) ? {
-        zone_text: d.zone_text || null,
+    // 1) Crear oferta DRAFT
+    // 1) Crear oferta DRAFT
+    const cat = d.category || "";
+    const isInmo = cat.includes("Inmobiliaria");
+    const isMotor = cat.includes("Vehículos");
+
+    // Construir extra_info LIMPIO basado exclusivamente en la categoría
+    let safeExtra = {
+      city: d.city || null,
+      zone_text: d.zone_text || null
+    }; // City y Zone siempre son útiles
+
+    if (isInmo) {
+      Object.assign(safeExtra, {
         operation_type: d.operationType || "Venta",
         rooms: d.rooms || null,
         sqm: d.sqm || null,
@@ -154,7 +156,10 @@
         lift: !!d.lift,
         terrace: !!d.terrace,
         ac: !!d.ac,
-        parking: !!d.parking,
+        parking: !!d.parking
+      });
+    } else if (isMotor) {
+      Object.assign(safeExtra, {
         car_brand: d.carBrand || null,
         car_model: d.carModel || null,
         car_year: d.carYear || null,
@@ -163,56 +168,77 @@
         car_hp: d.carHp || null,
         car_fuel: d.carFuel || null,
         car_trans: !!d.carTrans
-      } : null,
-      status: d.status || "DRAFT" // Preservar status si editamos (o default DRAFT)
-    };
-
-    if (d.editing_id) {
-      // --- MODO EDICIÓN (PUT) ---
-      console.log("Updating offer:", d.editing_id, payload);
-      try {
-        const r = await fetch(`/api/v1/offers/${d.editing_id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        if (!r.ok) {
-          const j = await r.json();
-          throw new Error(j.detail || ("HTTP " + r.status));
-        }
-        // Éxito update
-      } catch (e) {
-        alert("Error actualizando oferta: " + e.message);
-        return;
-      }
-
-      // Reutilizamos la ID para subir fotos/videos si las hay
-      var offerId = d.editing_id;
-      var isNew = false;
-
+      });
     } else {
-      // --- MODO CREACIÓN (POST) ---
-      console.log("Creating offer:", payload);
-      try {
-        const r = await fetch("/api/v1/offers", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        const j = await r.json();
-        if (!r.ok) {
-          const msg = (typeof j.detail === 'string') ? j.detail : JSON.stringify(j.detail);
-          throw new Error(msg || ("HTTP " + r.status));
-        }
-        var offerId = j.id;
-        var isNew = true;
-      } catch (e) {
-        alert("Error creando oferta: " + e.message);
-        return;
-      }
+      // Mercadillo / Servicios / Otros
+      // No añadimos nada específico de Inmo/Motor para evitar "contaminación"
+      // Si acaso, operation_type podría ser útil si es venta/alquiler general
     }
 
-    // 2) Subir foto si existe (file input tiene prioridad)
+    const payload = {
+      profile_id: profileIdInt,
+      offer_kind: "SERVICE",
+      category: d.category,
+      title: d.title,
+      description: (d.description || "").trim() || null,
+      price: (d.price == null || d.price === "" ? null : Number(d.price)),
+      currency: "EUR",
+      available_now: !!d.available_now,
+      allergens: d.specialty ? String(d.specialty) : null,
+      allergens: d.specialty ? String(d.specialty) : null,
+      extra_info: safeExtra
+    };
+
+    // Logic for Status Update
+    if (d.status) {
+      let s = d.status;
+      if (s === "Disponible") s = "PUBLISHED";
+      payload.status = s;
+    }
+
+    console.log("Publishing payload:", payload);
+
+    // 4) Enviar a revisión
+    // Si era UPDATE, no hacemos POST submit (ya se hizo update en paso 1 o aquí si moviéramos lógica)
+    // PERO espera, publish hace el SAVE (create/update).
+    // Si es CREATE -> POST /offers -> Uploads -> POST /submit
+    // Si es UPDATE -> PUT /offers/{id} -> Uploads -> (Reset status? No).
+
+    // LOGICA PREVIA DE SAVE (POST vs PUT)
+    // ---------------------------------------------------------
+    const isEdit = !!d.editing_id;
+    let method = "POST";
+    let url = "/api/v1/offers";
+
+    if (isEdit) {
+      method = "PUT";
+      url = `/api/v1/offers/${d.editing_id}`;
+    }
+
+    console.log(`${isEdit ? "Updating" : "Creating"} offer...`);
+
+    let offer;
+    try {
+      const r = await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const j = await r.json();
+      if (!r.ok) {
+        console.error("Server error detail:", j);
+        const msg = (typeof j.detail === 'string') ? j.detail : JSON.stringify(j.detail);
+        throw new Error(msg || ("HTTP " + r.status));
+      }
+      offer = j;
+    } catch (e) {
+      alert(`Error ${isEdit ? "actualizando" : "creando"} oferta: ` + e.message);
+      return;
+    }
+
+    const offerId = offer.id;
+
+    // 2) Subir foto si existe (solo si el usuario seleccionó nueva)
     const photoFile = document.getElementById("wPhoto").files[0];
     if (photoFile) {
       try {
@@ -221,12 +247,11 @@
         const rPhoto = await fetch(`/api/v1/offers/${offerId}/photo`, { method: "POST", body: fd });
         if (!rPhoto.ok) throw new Error("Error subiendo foto");
       } catch (e) {
-        if (isNew) alert("Oferta creada, pero la foto falló: " + e.message);
-        else console.error("Foto upload fail", e.message); // En edit somos menos agresivos
+        alert("Oferta guardada, pero la foto falló: " + e.message);
       }
     }
 
-    // 3) Subir vídeo si existe
+    // 3) Subir vídeo si existe (solo si seleccionó nuevo)
     const videoFileActual = document.getElementById("wVideo").files[0];
     if (videoFileActual) {
       try {
@@ -235,30 +260,33 @@
         const r2 = await fetch(`/api/v1/offers/${offerId}/video`, { method: "POST", body: fd });
         if (!r2.ok) throw new Error("Error subiendo vídeo");
       } catch (e) {
-        if (isNew) alert("Oferta creada, pero el vídeo falló: " + e.message);
-        else alert("Error actualizando vídeo: " + e.message);
-        // Si falla video en Edit, no bloqueamos tanto
+        alert("Oferta guardada, pero el vídeo falló: " + e.message);
+        return;
       }
     }
 
-    // 4) Submit / Finalizar
-    // Si es New, hacemos submit para activar (aunque sea demo published)
-    // Si es Edit, mantenemos status (ya enviado en payload) a menos que queramos forzar algo.
-    // Para simplificar: Si es New -> submit. Si es Edit -> Nada (ya está guardado).
-
-    if (isNew) {
+    // 4) Enviar a revisión (SOLO SI ES CREATE)
+    // Si es UPDATE, asumimos que mantiene estado o que el backend decide.
+    // El endpoint PUT no cambia estado a PUBLISHED explícitamente, pero el usuario no pidió re-review.
+    if (!isEdit) {
       try {
-        await fetch(`/api/v1/offers/${offerId}/submit`, { method: "POST" });
-      } catch (e) { console.error("Submit fail", e); }
+        const r3 = await fetch(`/api/v1/offers/${offerId}/submit`, { method: "POST" });
+        if (!r3.ok) {
+          // Si falla el submit, la oferta queda en DRAFT.
+          console.warn("Submit failed");
+        }
+      } catch (e) {
+        console.error("Error submitting:", e);
+      }
     }
 
     localStorage.removeItem(wDraftKey());
-    alert(d.editing_id ? "¡Cambios guardados!" : "¡Oferta publicada!");
+    alert(isEdit ? "¡Oferta actualizada con éxito!" : "¡Oferta publicada con éxito!");
     location.href = "/ui/offers";
   }
 
   (function init() {
-    // label perfil activo (base.html ya lo rellena, pero por si acaso)
+    // label perfil activo
     const pid = localStorage.getItem("me_profile_id");
     const el = document.getElementById("activeProfileLabel");
     if (pid && el) el.textContent = "#" + pid;
@@ -267,6 +295,12 @@
     const vLabel = document.getElementById("videoInfoLabel");
     if (d.category && d.category.includes("Inmobiliaria")) {
       vLabel.innerHTML = "vídeo detallado (max 3 min)";
+    }
+
+    // Cambiar texto botón si es edición
+    if (d.editing_id) {
+      const btn = document.querySelector("button[onclick='publish()']");
+      if (btn) btn.textContent = "Guardar Cambios";
     }
 
     renderSummary();
